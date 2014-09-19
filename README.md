@@ -9,13 +9,16 @@ the `monitor` function.
 Additional commands include **_clear_** to clear the queue and **_stopMonitoring_** to indicate that no further monitoring
 is desired.
 
-##Using grunt for development tasks
+##Running grunt for development tasks
 
 `grunt` runs coffeelint and then coffee.
 
 `grunt coffeelint` runs coffeelint on all the .coffee source code in the src directory.
 
 `grunt coffee` runs coffee on all the .coffee source code in the src directory, converting it to .js code.
+
+`grunt jshint` runs jshint on all the .js code except one in the demo/lib/helpers directory. Note that jshint has about
+ten complaints about the index.js code. The other generated code is clean.
 
 `grunt bump` bumps the patch number up in the package.json file.
 
@@ -37,7 +40,7 @@ package.json file.
 4. In the second console window, run `node lib/provider01.js`, which will place two items in the queue. Shortly
    thereafter, the worker01 process will pick up the two items and display them.
 5. Repeat step 4.
-6. In the second console window, run `node lib/provider01.js stop`, which will put '***stop***' in the queue. Shortly
+6. In the second console window, run `node lib/provider01.js stop`, which will put a stop command in the queue. Shortly
    thereafter, the worker01 process will stop.
 
 ##Running the demo 02 code
