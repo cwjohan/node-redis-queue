@@ -3,8 +3,9 @@ node-redis-queue
 
 This is a very simple queing wrapper for Redis that is intended for communication between separate processes.
 
-The user pushes data onto the queue using the `push` function and monitors for data appearing in the queue using
-the `monitor` function.
+The sending process pushes data onto the queue using the `push` function. The receiving process monitors for data
+appearing in the queue using the `monitor` function. The receiving process listens for a 'message' event, which
+delivers the data to a callback function.
 
 Additional functions include `clear` to clear the queue and `stopMonitoring` to indicate that no further monitoring
 is desired.
