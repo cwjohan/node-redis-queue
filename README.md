@@ -47,6 +47,10 @@ package.json file.
 6. In the second console window, run `node lib/provider01.js stop`, which will put a stop command in the queue. Shortly
    thereafter, the worker01 process will stop.
 
+Note that, when running worker01, one optionally may use a 'mem' parameter to monitor memory usage. For example:
+
+`node worker01.js mem | grep '>>>' | tee memusage.out`
+
 ##Running the demo 02 code
 
 Not available yet.
