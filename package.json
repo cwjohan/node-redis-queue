@@ -1,0 +1,30 @@
+{
+  "name": "node-redis-queue",
+  "version": "0.0.1",
+  "description": "A simple, lightweight queue using Redis lpush and brpop",
+  "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/cwjohan/node-redis-queue"
+  },
+  "author": {
+    "name": "Craig Johannsen",
+    "email": "cwjohan[.@.]gmail.com"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "redis": "~0.8.2"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-bumpx": "~0.1.0",
+    "jasmine-node": "^1.14.5",
+    "grunt-contrib-coffee": "~0.4.0",
+    "coffeelint": "^1.6.0",
+    "grunt-coffeelint": "0.0.13",
+    "grunt-contrib-jshint": "^0.10.0"
+  },
+  "scripts": {
+    "test": "node_modules/.bin/jasmine-node --verbose spec"
+  }
+}

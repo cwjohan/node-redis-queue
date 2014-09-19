@@ -1,0 +1,27 @@
+{
+  "bitwise":     true,
+  "camelcase":   true,
+  "curly":       true,
+  "immed":       true,
+  "latedef":     true,
+  "newcap":      true,
+  "noarg":       true,
+  "noempty":     true,
+  "quotmark":    "single",
+  "undef":       true,
+  "unused":      true,
+  "strict":      true,
+  "debug":       true,
+  "evil":        false,
+  "node":        true,
+  "predef": [
+    "describe",
+    "expect",
+    "it",
+    "afterEach",
+    "beforeEach",
+    "spyOn",
+    "xdescribe",
+    "xit"]
+}
+
