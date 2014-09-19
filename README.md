@@ -22,7 +22,7 @@ corresponding lib directory.
 `grunt jshint` runs jshint on all the .js code except one in the demo/lib/helpers directory. Note that jshint has about
 ten complaints about the index.js code. The other generated code is clean.
 
-`grunt test` runs the suite of tests using jasmine-node. It looks for xxxSpec.js files in the spec directory.
+`grunt test` runs the suite of tests using jasmine-node. It looks for xxxSpec.js files in the lib directory.
 
 `grunt bump` bumps the patch number up in the package.json file.
 
