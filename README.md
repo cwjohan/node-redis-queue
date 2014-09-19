@@ -6,7 +6,7 @@ This is a very simple queing wrapper for Redis that is intended for communicatio
 The user pushes data onto the queue using the `push` function and monitors for data appearing in the queue using
 the `monitor` function.
 
-Additional commands include **_clear_** to clear the queue and **_stopMonitoring_** to indicate that no further monitoring
+Additional functions include `clear` to clear the queue and `stopMonitoring` to indicate that no further monitoring
 is desired.
 
 ##Running grunt for development tasks
