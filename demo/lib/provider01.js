@@ -1,6 +1,6 @@
 'use strict';
 
-var RedisQueue, clearInitially, myQueue, queueURLs, redis, redisConn, redisHost, redisPort, redisQueueName, redisQueueTimeout, stopWorker, urls;
+var RedisQueue, clearInitially, myQueue, queueURLs, redis, redisClient, redisHost, redisPort, redisQueueName, redisQueueTimeout, stopWorker, urls;
 
 redis = require('redis');
 
@@ -14,7 +14,7 @@ redisQueueName = 'urlq';
 
 redisQueueTimeout = 1;
 
-redisConn = null;
+redisClient = null;
 
 myQueue = null;
 
@@ -24,9 +24,9 @@ stopWorker = process.argv[2] === 'stop';
 
 urls = ['http://www.google.com', 'http://www.yahoo.com'];
 
-redisConn = redis.createClient(redisPort, redisHost);
+redisClient = redis.createClient(redisPort, redisHost);
 
-myQueue = new RedisQueue(redisConn, redisQueueTimeout);
+myQueue = new RedisQueue(redisClient, redisQueueTimeout);
 
 myQueue.on('end', function() {
   console.log('provider01 finished');
@@ -61,4 +61,4 @@ if (stopWorker) {
   }
 }
 
-redisConn.quit();
+redisClient.quit();

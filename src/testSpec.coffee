@@ -3,7 +3,7 @@ RedisQueue = require '../lib/index.js'
 redisPort = 6379
 redisHost = '127.0.0.1'
 redisQueueTimeout = 0
-redisConn = null
+redisClient = null
 myQueue = null
 expectedItems = [
     'item one',
@@ -15,12 +15,12 @@ itemCnt = 0
 describe 'RedisQueue', () ->
   it 'must connect to redis-server', (done) ->
     redis = require 'redis'
-    redisConn = redis.createClient redisPort, redisHost
-    expect(redisConn).toBeDefined()
+    redisClient = redis.createClient redisPort, redisHost
+    expect(redisClient).toBeDefined()
     done()
 
   it 'constructor must return a queue object', (done) ->
-    myQueue = new RedisQueue redisConn, redisQueueTimeout
+    myQueue = new RedisQueue redisClient, redisQueueTimeout
     expect(typeof myQueue).toEqual 'object'
 
     myQueue.on 'error', (error) ->
@@ -54,5 +54,5 @@ describe 'RedisQueue', () ->
 
   it 'quits Redis cleanly', () ->
     console.log 'Quitting redis'
-    expect(redisConn.end()).toBeUndefined()
+    expect(redisClient.end()).toBeUndefined()
 

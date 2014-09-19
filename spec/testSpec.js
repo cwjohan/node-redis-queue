@@ -1,6 +1,6 @@
 'use strict';
 
-var RedisQueue, expectedItems, itemCnt, myQueue, redisConn, redisHost, redisPort, redisQueueTimeout;
+var RedisQueue, expectedItems, itemCnt, myQueue, redisClient, redisHost, redisPort, redisQueueTimeout;
 
 RedisQueue = require('../lib/index.js');
 
@@ -10,7 +10,7 @@ redisHost = '127.0.0.1';
 
 redisQueueTimeout = 0;
 
-redisConn = null;
+redisClient = null;
 
 myQueue = null;
 
@@ -22,12 +22,12 @@ describe('RedisQueue', function() {
   it('must connect to redis-server', function(done) {
     var redis;
     redis = require('redis');
-    redisConn = redis.createClient(redisPort, redisHost);
-    expect(redisConn).toBeDefined();
+    redisClient = redis.createClient(redisPort, redisHost);
+    expect(redisClient).toBeDefined();
     return done();
   });
   it('constructor must return a queue object', function(done) {
-    myQueue = new RedisQueue(redisConn, redisQueueTimeout);
+    myQueue = new RedisQueue(redisClient, redisQueueTimeout);
     expect(typeof myQueue).toEqual('object');
     myQueue.on('error', function(error) {
       console.log('>>>' + error);
@@ -63,6 +63,6 @@ describe('RedisQueue', function() {
   });
   return it('quits Redis cleanly', function() {
     console.log('Quitting redis');
-    return expect(redisConn.end()).toBeUndefined();
+    return expect(redisClient.end()).toBeUndefined();
   });
 });

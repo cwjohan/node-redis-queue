@@ -1,6 +1,6 @@
 'use strict';
 
-var RedisQueue, SHA1, myQueue, redis, redisConn, redisHost, redisPort, redisQueueName, redisQueueTimeout, request;
+var RedisQueue, SHA1, memwatch, myQueue, redis, redisClient, redisHost, redisPort, redisQueueName, redisQueueTimeout, request;
 
 SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1;
 
@@ -16,15 +16,25 @@ redisHost = '127.0.0.1';
 
 redisQueueName = 'urlq';
 
-redisQueueTimeout = 4;
+redisQueueTimeout = 1;
 
-redisConn = null;
+redisClient = null;
 
 myQueue = null;
 
-redisConn = redis.createClient(redisPort, redisHost);
+if (process.argv[2] === 'mem') {
+  memwatch = require('memwatch');
+  memwatch.on('stats', function(d) {
+    return console.log('>>>current = ' + d.current_base + ', max = ' + d.max);
+  });
+  memwatch.on('leak', function(d) {
+    return console.log('>>>LEAK = ', d);
+  });
+}
 
-myQueue = new RedisQueue(redisConn, redisQueueTimeout);
+redisClient = redis.createClient(redisPort, redisHost);
+
+myQueue = new RedisQueue(redisClient, redisQueueTimeout);
 
 myQueue.on('end', function() {
   console.log('worker01 detected Redis connection ended');
@@ -34,6 +44,10 @@ myQueue.on('end', function() {
 myQueue.on('error', function(error) {
   console.log('worker01 stopping due to: ' + error);
   return process.exit();
+});
+
+myQueue.on('timeout', function() {
+  return console.log('worker01 timeout');
 });
 
 myQueue.on('message', function(queueName, url) {

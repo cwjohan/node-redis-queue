@@ -5,7 +5,7 @@ redisPort = 6379
 redisHost = '127.0.0.1'
 redisQueueName = 'urlq'
 redisQueueTimeout = 1
-redisConn = null
+redisClient = null
 myQueue = null
 clearInitially = process.argv[2] is 'clear'
 stopWorker = process.argv[2] is 'stop'
@@ -14,8 +14,8 @@ urls = [
   'http://www.yahoo.com'
 ]
 
-redisConn = redis.createClient redisPort, redisHost
-myQueue = new RedisQueue redisConn, redisQueueTimeout
+redisClient = redis.createClient redisPort, redisHost
+myQueue = new RedisQueue redisClient, redisQueueTimeout
 
 myQueue.on 'end', () ->
   console.log 'provider01 finished'
@@ -42,5 +42,5 @@ else
   else
     queueURLs()
 
-redisConn.quit()
+redisClient.quit()
 

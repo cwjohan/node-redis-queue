@@ -4,20 +4,20 @@ events = require 'events'
 class RedisQueueError extends Error
 
 class RedisQueue extends events.EventEmitter
-  constructor: (@conn, @timeout = 2) ->
+  constructor: (@client, @timeout = 2) ->
     @stop = false
-    @conn.on 'error', (err) =>
+    @client.on 'error', (err) =>
       @stop = true
       @emit 'error', err
-    @conn.on 'end', () =>
+    @client.on 'end', () =>
       @stop = true
       @emit 'end'
 
   push: (key, payload) ->
-    @conn.lpush key, JSON.stringify(payload)
+    @client.lpush key, JSON.stringify(payload)
 
   monitor: (keysToMonitor...) ->
-    @conn.brpop keysToMonitor..., @timeout, (err, replies) =>
+    @client.brpop keysToMonitor..., @timeout, (err, replies) =>
       if err?
         @emit 'error', err
       else
@@ -32,7 +32,7 @@ class RedisQueue extends events.EventEmitter
       @monitor keysToMonitor... unless @stop
 
   clear: (keysToClear...) ->
-    @conn.del keysToClear...
+    @client.del keysToClear...
 
   stopMonitoring: () ->
     @stop = true

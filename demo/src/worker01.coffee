@@ -6,12 +6,19 @@ RedisQueue = require '../../../node-redis-queue'
 redisPort = 6379
 redisHost = '127.0.0.1'
 redisQueueName = 'urlq'
-redisQueueTimeout = 4
-redisConn = null
+redisQueueTimeout = 1
+redisClient = null
 myQueue = null
 
-redisConn = redis.createClient redisPort, redisHost
-myQueue = new RedisQueue redisConn, redisQueueTimeout
+if process.argv[2] is 'mem'
+  memwatch = require 'memwatch'
+  memwatch.on 'stats', (d) ->
+    console.log '>>>current = ' + d.current_base + ', max = ' + d.max
+  memwatch.on 'leak', (d) ->
+    console.log '>>>LEAK = ', d
+
+redisClient = redis.createClient redisPort, redisHost
+myQueue = new RedisQueue redisClient, redisQueueTimeout
 
 myQueue.on 'end', () ->
   console.log 'worker01 detected Redis connection ended'
@@ -20,6 +27,9 @@ myQueue.on 'end', () ->
 myQueue.on 'error', (error) ->
   console.log 'worker01 stopping due to: ' + error
   process.exit()
+
+myQueue.on 'timeout', ->
+  console.log 'worker01 timeout'
 
 myQueue.on 'message', (queueName, url) ->
   console.log 'worker01 processing URL "' + url + '"'
