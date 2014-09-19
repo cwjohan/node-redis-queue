@@ -1,5 +1,6 @@
 #worker01 memory usage:
 
+```
 $ node worker01.js mem | grep '>>>' | tee memusage.out
 >>>LEAK =  { start: Fri Sep 19 2014 15:00:04 GMT-0700 (Pacific Daylight Ti
   end: Fri Sep 19 2014 15:01:50 GMT-0700 (Pacific Daylight Time),
@@ -30,7 +31,8 @@ $ node worker01.js mem | grep '>>>' | tee memusage.out
 >>>current = 13216432, max = 14387672
 >>>current = 13214176, max = 14387672
 ...
+```
 
-Note that max memory usage stabilizes at 14387672. A couple of leaks are
-reported, but these are temporary issues due to the eventual memory
+Note that, after running provider01 several dozen times, max memory usage stabilizes at 14387672.
+A couple of leaks are reported, but these are temporary issues due to the eventual memory
 usage stabilization.
