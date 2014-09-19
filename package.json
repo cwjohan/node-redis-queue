@@ -26,6 +26,6 @@
         "memwatch": "~0.2.2"
     },
     "scripts": {
-        "test": "node_modules/.bin/jasmine-node --verbose spec"
+        "test": "node_modules/.bin/jasmine-node --verbose lib"
     }
 }

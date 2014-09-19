@@ -9,7 +9,7 @@ module.exports = (grunt) ->
       compile:
         files:
           'lib/index.js': 'src/index.coffee',
-          'spec/testSpec.js': 'src/testSpec.coffee'
+          'lib/testSpec.js': 'src/testSpec.coffee'
           'demo/lib/worker01.js': 'demo/src/worker01.coffee'
           'demo/lib/provider01.js': 'demo/src/provider01.coffee'
           'demo/lib/worker02.js': 'demo/src/worker02.coffee'
@@ -68,7 +68,7 @@ module.exports = (grunt) ->
   grunt.registerTask 'test', 'Runs Jasmine tests', ->
     exec = require('child_process').exec
     done = this.async()
-    child = exec 'bash node_modules/.bin/jasmine-node --verbose spec',(error, stdout, stderr) ->
+    child = exec 'bash node_modules/.bin/jasmine-node --verbose lib',(error, stdout, stderr) ->
       console.log(stdout)
       console.log('Error running tests: ' + error) if error?
       done(!error?)

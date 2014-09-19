@@ -30,3 +30,7 @@ $ node worker01.js mem | grep '>>>' | tee memusage.out
 >>>current = 13216432, max = 14387672
 >>>current = 13214176, max = 14387672
 ...
+
+Note that max memory usage stabilizes at 14387672. A couple of leaks are
+reported, but these are temporary issues due to the eventual memory
+usage stabilization.
