@@ -40,7 +40,7 @@ package.json file.
 6. In the second console window, run `node lib/provider01.js stop`, which will put '***stop***' in the queue. Shortly
    thereafter, the worker01 process will stop.
 
-#Running the demo 02 code
+##Running the demo 02 code
 
 Not available yet.
 
