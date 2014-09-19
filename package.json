@@ -1,6 +1,6 @@
 {
   "name": "node-redis-queue",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "description": "A simple, lightweight queue using Redis lpush and brpop",
   "main": "lib/index.js",
   "repository": {
@@ -9,7 +9,7 @@
   },
   "author": {
     "name": "Craig Johannsen",
-    "email": "cwjohan[.@.]gmail.com"
+    "email": "cwjohan[at]gmail[dot]com"
   },
   "license": "MIT",
   "dependencies": {

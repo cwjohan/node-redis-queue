@@ -21,6 +21,8 @@ corresponding lib directory.
 `grunt jshint` runs jshint on all the .js code except one in the demo/lib/helpers directory. Note that jshint has about
 ten complaints about the index.js code. The other generated code is clean.
 
+`grunt test` runs the suite of tests using jasmine-node.
+
 `grunt bump` bumps the patch number up in the package.json file.
 
 `grunt git-tag` commits the latest staged code changes and tags the code with the version obtained from the package.json file.
@@ -31,7 +33,7 @@ package.json file.
 
 ##Running the Jasmine tests using npm
 
-`npm test` runs the suite of tests.
+`npm test` runs the suite of tests using jasmine-node.
 
 ##Running the demo 01 code
 
@@ -66,6 +68,6 @@ Changes from the original code include:
 6. Emitting of Redis wait 'timeout' events.
 7. Addition of tests using jasmine-node.
 8. Addition of demo code in the demo directory.
-9. Changes to the Gruntfile to use coffeelint and jshint.
+9. Changes to the Gruntfile to use coffeelint and jshinti and to run the test suite.
 
 

@@ -64,13 +64,22 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-coffeelint'
   grunt.loadNpmTasks 'grunt-contrib-jshint'
 
+  # Task to run the test suite using jasmine-node.
+  grunt.registerTask 'test', 'Runs Jasmine tests', ->
+    exec = require('child_process').exec
+    done = this.async()
+    child = exec 'bash node_modules/.bin/jasmine-node --verbose spec',(error, stdout, stderr) ->
+      console.log(stdout)
+      console.log('Error running tests: ' + error) if error?
+      done(!error?)
+
   # Task to tag a version in git
   grunt.registerTask 'git-tag', 'Tags a release in git', ->
     exec = require('child_process').exec
     done = this.async()
     releaseVersion = grunt.template.process('<%= pkg.version %>')
 
-    child = exec 'git ci -am \'v#{releaseVersion}\' && git tag v#{releaseVersion}', (error, stdout, stderr) ->
+    child = exec 'git commit -am \'v#{releaseVersion}\' && git tag v#{releaseVersion}', (error, stdout, stderr) ->
       console.log('Error running git tag: ' + error) if error?
       done(!error?)
 
