@@ -15,7 +15,8 @@ is desired.
 
 `grunt coffeelint` runs coffeelint on all the .coffee source code in the src directory.
 
-`grunt coffee` runs coffee on all the .coffee source code in the src directory, converting it to .js code.
+`grunt coffee` runs coffee on all the .coffee source code in the src directory, converting it to .js code in the
+corresponding lib directory.
 
 `grunt jshint` runs jshint on all the .js code except one in the demo/lib/helpers directory. Note that jshint has about
 ten complaints about the index.js code. The other generated code is clean.
