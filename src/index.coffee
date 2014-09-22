@@ -29,7 +29,7 @@ class RedisQueue extends events.EventEmitter
           else
             @emit 'timeout'
       
-      @monitor keysToMonitor... unless @stop
+      @monitor keysToMonitor..., @timeout unless @stop
 
   clear: (keysToClear...) ->
     @client.del keysToClear...
