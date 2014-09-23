@@ -7,15 +7,13 @@ module.exports = (grunt) ->
     # Coffeescript compilation
     coffee:
       compile:
-        files:
-          'lib/index.js': 'src/index.coffee',
-          'lib/testSpec.js': 'src/testSpec.coffee'
-          'demo/lib/worker01.js': 'demo/src/worker01.coffee'
-          'demo/lib/provider01.js': 'demo/src/provider01.coffee'
-          'demo/lib/worker02.js': 'demo/src/worker02.coffee'
-          'demo/lib/provider02.js': 'demo/src/provider02.coffee'
+        expand: true
+        cwd: 'src/'
+        src: ['**/*.coffee']
+        dest: 'lib/'
+        ext: '.js'
       options:
-          bare: true
+        bare: true
 
     # Version bumping
     bump:
