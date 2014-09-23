@@ -7,11 +7,10 @@ module.exports = (grunt) ->
     # Coffeescript compilation
     coffee:
       compile:
-        expand: true
-        cwd: 'src/'
-        src: ['**/*.coffee']
-        dest: 'lib/'
-        ext: '.js'
+        files: [
+          {expand: true, cwd: 'src', src: '*.coffee', dest: 'lib', ext: '.js'}
+          {expand: true, cwd: 'demo/src', src: '*.coffee', dest: 'demo/lib', ext: '.js'}
+        ]
       options:
         bare: true
 
