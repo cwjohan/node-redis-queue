@@ -1,0 +1,8 @@
+{
+  "redis_provider": {
+    "type": "DefaultLocal",
+  },
+  "redis_options": {
+    "retry_max_delay": 500
+  }
+}

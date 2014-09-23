@@ -1,8 +1,6 @@
 'use strict'
 redis = require 'redis'
 RedisQueue = require '../../../node-redis-queue'
-redisPort = 6379
-redisHost = '127.0.0.1'
 redisQueueName = 'urlq'
 redisQueueTimeout = 1
 redisClient = null
@@ -11,10 +9,14 @@ clearInitially = process.argv[2] is 'clear'
 stopWorker = process.argv[2] is 'stop'
 urls = [
   'http://www.google.com',
-  'http://www.yahoo.com'
+  'http://www.yahoo.com',
+  'http://ourfamilystory.com',
+  'http://ourfamilystory.com/pnuke'
 ]
 
-redisClient = redis.createClient redisPort, redisHost
+configurator = require '../../lib/redisQueueConfig'
+config = configurator.getConfog()
+redisClient = configurator.getClient(config)
 myQueue = new RedisQueue redisClient, redisQueueTimeout
 
 myQueue.on 'end', () ->

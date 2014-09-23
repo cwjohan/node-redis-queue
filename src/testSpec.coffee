@@ -1,7 +1,5 @@
 'use strict'
-RedisQueue = require '../lib/index.js'
-redisPort = 6379
-redisHost = '127.0.0.1'
+RedisQueue = require '..'
 redisQueueTimeout = 0
 redisClient = null
 myQueue = null
@@ -14,8 +12,9 @@ itemCnt = 0
 
 describe 'RedisQueue', () ->
   it 'must connect to redis-server', (done) ->
-    redis = require 'redis'
-    redisClient = redis.createClient redisPort, redisHost
+    configurator = require './redisQueueConfig'
+    config = configurator.getConfig()
+    redisClient = configurator.getClient(config)
     expect(redisClient).toBeDefined()
     done()
 

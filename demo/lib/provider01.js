@@ -1,14 +1,10 @@
 'use strict';
 
-var RedisQueue, clearInitially, myQueue, queueURLs, redis, redisClient, redisHost, redisPort, redisQueueName, redisQueueTimeout, stopWorker, urls;
+var RedisQueue, clearInitially, config, configurator, myQueue, queueURLs, redis, redisClient, redisQueueName, redisQueueTimeout, stopWorker, urls;
 
 redis = require('redis');
 
 RedisQueue = require('../../../node-redis-queue');
-
-redisPort = 6379;
-
-redisHost = '127.0.0.1';
 
 redisQueueName = 'urlq';
 
@@ -22,9 +18,13 @@ clearInitially = process.argv[2] === 'clear';
 
 stopWorker = process.argv[2] === 'stop';
 
-urls = ['http://www.google.com', 'http://www.yahoo.com'];
+urls = ['http://www.google.com', 'http://www.yahoo.com', 'http://ourfamilystory.com', 'http://ourfamilystory.com/pnuke'];
 
-redisClient = redis.createClient(redisPort, redisHost);
+configurator = require('../../lib/redisQueueConfig');
+
+config = configurator.getConfog();
+
+redisClient = configurator.getClient(config);
 
 myQueue = new RedisQueue(redisClient, redisQueueTimeout);
 

@@ -1,6 +1,6 @@
 'use strict';
 
-var RedisQueue, SHA1, memwatch, myQueue, redis, redisClient, redisHost, redisPort, redisQueueName, redisQueueTimeout, request;
+var RedisQueue, SHA1, config, configurator, memwatch, myQueue, redis, redisClient, redisQueueName, redisQueueTimeout, request;
 
 SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1;
 
@@ -9,10 +9,6 @@ request = require('request');
 redis = require('redis');
 
 RedisQueue = require('../../../node-redis-queue');
-
-redisPort = 6379;
-
-redisHost = '127.0.0.1';
 
 redisQueueName = 'urlq';
 
@@ -32,7 +28,11 @@ if (process.argv[2] === 'mem') {
   });
 }
 
-redisClient = redis.createClient(redisPort, redisHost);
+configurator = require('../../lib/redisQueueConfig');
+
+config = configurator.getConfig();
+
+redisClient = configurator.getClient(config);
 
 myQueue = new RedisQueue(redisClient, redisQueueTimeout);
 
