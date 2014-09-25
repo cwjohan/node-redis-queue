@@ -73,6 +73,6 @@ Changes from the original code include:
 6. Emitting of Redis wait 'timeout' events.
 7. Addition of tests using jasmine-node.
 8. Addition of demo code in the demo directory.
-9. Changes to the Gruntfile to use coffeelint and jshinti and to run the test suite.
+9. Changes to the Gruntfile to use coffeelint and jshint and to run the test suite.
 
 
