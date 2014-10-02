@@ -10,6 +10,64 @@ delivers the data to a callback function.
 Additional functions include `clear` to clear the queue and `stopMonitoring` to indicate that no further monitoring
 is desired.
 
+##Installation
+
+`npm install node-redis-queue`
+
+##Usage
+
+###Coffescript Example
+
+1. Require `redis` and `node-redis-queue`
+
+        redis = require 'redis'  
+        RedisQueue = require 'node-redis-queue'
+
+2. Create a Redis client connection
+
+        redisClient = redis.createClient redisPort, redisHost
+
+3. Create a RedisQueue instance
+
+        myQueue = new RedisQueue redisClient, redisQueueTimeout
+
+4. Optionally, clear previous data from the queue
+
+        myQueue.clear myQueueName
+
+4. Optionally, push data to one or more queues
+
+        myQueue push myQueueName, myData
+
+5. Optionally, handle 'message' events
+
+        myQueue.on 'message', (queueName, myData) ->  
+            console.log 'data = ' + myData
+
+6. Optionally, monitor one or more queues for receipt of data
+
+        myQueue.monitor myQueueName
+
+7. Optionally, handle errors
+
+        myQueue.on 'error', (error) ->  
+            console.log 'Stopping due to: ' + error
+
+8. Optionally, handle timeout events
+
+        myQueue.on 'timeout', ->  
+            console.log 'timeout event'
+
+7. When done, quit the Redis client
+
+        redisClient.quit()
+
+  or, more gracefully,
+
+        myQueue.on 'end', () ->  
+            process.exit()
+
+
 ##Running grunt for development tasks
 
 `grunt` runs coffeelint and then coffee.
