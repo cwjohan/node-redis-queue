@@ -35,30 +35,29 @@ is desired.
 
         myQueue.clear myQueueName
 
-4. Optionally, push data to one or more queues
+5. Optionally, push data to one or more queues
 
         myQueue push myQueueName, myData
 
-5. Optionally, handle 'message' events
-
-        myQueue.on 'message', (queueName, myData) ->  
-            console.log 'data = ' + myData
-
-6. Optionally, monitor one or more queues for receipt of data
-
-        myQueue.monitor myQueueName
-
-7. Optionally, handle errors
+6. Optionally, handle error events
 
         myQueue.on 'error', (error) ->  
-            console.log 'Stopping due to: ' + error
+            console.log 'Stopping due to: ' + error  
+            process.exit()
 
-8. Optionally, handle timeout events
+7. Optionally, handle timeout events
 
         myQueue.on 'timeout', ->  
             console.log 'timeout event'
 
-7. When done, quit the Redis client
+8. Optionally, handle 'message' events and subsequently monitor for data in the queue
+
+        myQueue.on 'message', (queueName, myData) ->  
+            console.log 'data = ' + myData 
+        ...  
+        myQueue.monitor myQueueName
+
+9. When done, quit the Redis client
 
         redisClient.quit()
 
