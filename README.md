@@ -71,6 +71,63 @@ is desired.
         myQueue.on 'end', () ->  
             process.exit()
 
+###Javascript Example
+
+1. Ensure the Redis server is running. If not, then run
+
+    redis-server &
+
+2. Require `redis` and `node-redis-queue`
+
+        var redis = require('redis');  
+        var RedisQueue = require('node-redis-queue');
+
+3. Create a Redis client connection
+
+        var redisClient = redis.createClient(redisPort, redisHost);
+
+4. Create a RedisQueue instance
+
+        var myQueue = new RedisQueue(redisClient, redisQueueTimeout);
+
+5. Optionally, clear previous data from the queue
+
+        myQueue.clear(myQueueName);
+
+6. Optionally, push data to your queue
+
+        myQueue.push(myQueueName, myData);
+
+7. Optionally, handle error events
+
+        myQueue.on('error', function(error) {  
+            console.log('Stopping due to: ' + error);  
+            process.exit();
+        });
+
+8. Optionally, handle timeout events
+
+        myQueue.on('timeout', function() {  
+            console.log('timeout event');
+        });
+
+9. Optionally, handle 'message' events and subsequently monitor for data in the queue
+
+        myQueue.on('message', function(queueName, myData) {  
+            console.log('data = ' + myData); 
+        });
+        ...  
+        myQueue.monitor(myQueueName);
+
+10. When done, quit the Redis client
+
+        redisClient.quit()
+
+  or, more gracefully,
+
+        myQueue.on('end', function() {  
+            process.exit()
+        });
 
 ##Running grunt for development tasks
 
