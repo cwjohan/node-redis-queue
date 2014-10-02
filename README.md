@@ -17,7 +17,7 @@ is desired.
 
 ##Usage
 
-###Coffescript Example
+###Coffescript Usage Example
 
 1. Ensure the Redis server is running. If not, then run
 
@@ -71,7 +71,7 @@ is desired.
         myQueue.on 'end', () ->  
             process.exit()
 
-###Javascript Example
+###Javascript Usage Example
 
 1. Ensure the Redis server is running. If not, then run
 
