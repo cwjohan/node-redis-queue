@@ -12,52 +12,57 @@ is desired.
 
 ##Installation
 
-`npm install node-redis-queue`
+    npm install redis
+    npm install node-redis-queue
 
 ##Usage
 
 ###Coffescript Example
 
-1. Require `redis` and `node-redis-queue`
+1. Ensure the Redis server is running. If not, then run
+
+    redis-server &
+
+2. Require `redis` and `node-redis-queue`
 
         redis = require 'redis'  
         RedisQueue = require 'node-redis-queue'
 
-2. Create a Redis client connection
+3. Create a Redis client connection
 
         redisClient = redis.createClient redisPort, redisHost
 
-3. Create a RedisQueue instance
+4. Create a RedisQueue instance
 
         myQueue = new RedisQueue redisClient, redisQueueTimeout
 
-4. Optionally, clear previous data from the queue
+5. Optionally, clear previous data from the queue
 
         myQueue.clear myQueueName
 
-5. Optionally, push data to your queue
+6. Optionally, push data to your queue
 
         myQueue push myQueueName, myData
 
-6. Optionally, handle error events
+7. Optionally, handle error events
 
         myQueue.on 'error', (error) ->  
             console.log 'Stopping due to: ' + error  
             process.exit()
 
-7. Optionally, handle timeout events
+8. Optionally, handle timeout events
 
         myQueue.on 'timeout', ->  
             console.log 'timeout event'
 
-8. Optionally, handle 'message' events and subsequently monitor for data in the queue
+9. Optionally, handle 'message' events and subsequently monitor for data in the queue
 
         myQueue.on 'message', (queueName, myData) ->  
             console.log 'data = ' + myData 
         ...  
         myQueue.monitor myQueueName
 
-9. When done, quit the Redis client
+10. When done, quit the Redis client
 
         redisClient.quit()
 
