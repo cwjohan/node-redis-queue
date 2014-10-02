@@ -35,7 +35,7 @@ is desired.
 
         myQueue.clear myQueueName
 
-5. Optionally, push data to one or more queues
+5. Optionally, push data to your queue
 
         myQueue push myQueueName, myData
 
