@@ -1,22 +1,18 @@
 'use strict';
 
-var RedisQueue, SHA1, config, configurator, memwatch, myQueue, redis, redisClient, redisQueueName, redisQueueTimeout, request;
+var SHA1, memwatch, myQueue, redisQueueTimeout, request, urlQueueName, verbose;
 
 SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1;
 
 request = require('request');
 
-redis = require('redis');
-
-RedisQueue = require('../../../node-redis-queue');
-
-redisQueueName = 'urlq';
+urlQueueName = 'urlq';
 
 redisQueueTimeout = 1;
 
-redisClient = null;
-
 myQueue = null;
+
+verbose = process.argv[3] === 'verbose';
 
 if (process.argv[2] === 'mem') {
   memwatch = require('memwatch');
@@ -28,13 +24,9 @@ if (process.argv[2] === 'mem') {
   });
 }
 
-configurator = require('../../lib/redisQueueConfig');
+myQueue = new RedisQueue;
 
-config = configurator.getConfig();
-
-redisClient = configurator.getClient(config);
-
-myQueue = new RedisQueue(redisClient, redisQueueTimeout);
+myQueue.connect();
 
 myQueue.on('end', function() {
   console.log('worker01 detected Redis connection ended');
@@ -47,22 +39,32 @@ myQueue.on('error', function(error) {
 });
 
 myQueue.on('timeout', function() {
-  return console.log('worker01 timeout');
+  if (verbose) {
+    return console.log('worker01 timeout');
+  }
 });
 
 myQueue.on('message', function(queueName, url) {
-  console.log('worker01 processing URL "' + url + '"');
-  if (url === '***stop***') {
-    console.log('worker01 stopping');
-    process.exit();
-  }
-  return request(url, function(error, response, body) {
-    if (!error && response.statusCode === 200) {
-      return console.log(url + ' SHA1 = ' + SHA1(body));
-    } else {
-      return console.log(error);
+  if (typeof url === 'string') {
+    if (url === '***stop***') {
+      console.log('worker01 stopping');
+      process.exit();
     }
-  });
+    console.log('worker01 processing URL "' + url + '"');
+    return request(url, function(error, response, body) {
+      var sha1;
+      if (!error && response.statusCode === 200) {
+        sha1 = SHA1(body);
+        return console.log(url + ' SHA1 = ' + sha1);
+      } else {
+        return console.log(error);
+      }
+    });
+  } else {
+    return console.log('Unexpected message: ', url);
+  }
 });
 
-myQueue.monitor(redisQueueName);
+myQueue.monitor(redisQueueTimeout, urlQueueName);
+
+console.log('Waiting for data...');

@@ -1,21 +1,24 @@
 'use strict'
-redis = require 'redis'
 RedisQueue = require '../../../node-redis-queue'
-redisPort = 6379
-redisHost = '127.0.0.1'
-redisQueueName = 'urlq'
-redisQueueTimeout = 1
-redisConn = null
-myQueue = null
-clearInitially = process.argv[2] is 'clear'
+urlQueueName = 'urlq'
+providerId = process.argv[2]
+unless providerId
+  console.log 'Missing provider id argument'
+  process.exit()
+resultQueueName = 'urlshaq' + providerId
+resultQueueTimeout = 1
+clearInitially = process.argv[3] is 'clear'
 stopWorker = process.argv[2] is 'stop'
 urls = [
   'http://www.google.com',
-  'http://www.yahoo.com'
+  'http://www.yahoo.com',
+  'http://ourfamilystory.com',
+  'http://ourfamilystory.com/pnuke'
 ]
+resultCnt = 0
 
-redisConn = redis.createClient redisPort, redisHost
-myQueue = new RedisQueue redisConn, redisQueueTimeout
+myQueue = new RedisQueue
+myQueue.connect()
 
 myQueue.on 'end', () ->
   console.log 'provider01 finished'
@@ -25,22 +28,29 @@ myQueue.on 'error', (error) ->
   console.log 'provider01 stopping due to: ' + error
   process.exit()
 
+myQueue.on 'message', (queueName, result) ->
+  console.log 'result = ', result
+  myQueue.disconnect() if ++resultCnt >= urls.length
+
 queueURLs = () ->
   for url in urls
-    console.log 'Pushing "' + url
-    myQueue.push redisQueueName, url
+    console.log 'Pushing "' + url + '"'
+    myQueue.push urlQueueName, {url: url, q: resultQueueName}
   return
 
 if stopWorker
   console.log 'Stopping worker'
-  myQueue.push redisQueueName, '***stop***'
+  myQueue.push urlQueueName, '***stop***'
+  myQueue.disconnect()
 else
   if clearInitially
-    myQueue.clear redisQueueName, () ->
-      console.log 'Cleared "' + redisQueueName + '"'
+    myQueue.clear urlQueueName, () ->
+      console.log 'Cleared "' + urlQueueName + '"'
       queueURLs()
+      return
   else
     queueURLs()
 
-redisConn.quit()
+myQueue.monitor resultQueueTimeout, resultQueueName
+
 

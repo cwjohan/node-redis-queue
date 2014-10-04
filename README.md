@@ -12,122 +12,119 @@ is desired.
 
 ##Installation
 
-    npm install redis
-    npm install node-redis-queue
+    npm install node-redis-queue --save
 
 ##Usage
 
 ###Coffescript Usage Example
 
-1. Ensure the Redis server is running. If not, then run
+1. Ensure you have a Redis server installed and running. For example, once installed, you can run it locally by
 
-    redis-server &
+        redis-server &
 
-2. Require `redis` and `node-redis-queue`
+2. Require `node-redis-queue`
 
-        redis = require 'redis'  
         RedisQueue = require 'node-redis-queue'
 
-3. Create a Redis client connection
+3. Create a RedisQueue instance and connect to Redis
 
-        redisClient = redis.createClient redisPort, redisHost
+        myQueue = new RedisQueue  
+        myQueue.connect()
 
-4. Create a RedisQueue instance
+  Alternatively, you can provide an existing Redis connection
 
-        myQueue = new RedisQueue redisClient, redisQueueTimeout
+        myQueue.connect redisConn
 
-5. Optionally, clear previous data from the queue
+4. Optionally, clear previous data from the queue
 
         myQueue.clear myQueueName
 
-6. Optionally, push data to your queue
+5. Optionally, push data to your queue
 
         myQueue push myQueueName, myData
 
-7. Optionally, handle error events
+6. Optionally, handle error events
 
         myQueue.on 'error', (error) ->  
             console.log 'Stopping due to: ' + error  
             process.exit()
 
-8. Optionally, handle timeout events
+7. Optionally, handle timeout events
 
         myQueue.on 'timeout', ->  
             console.log 'timeout event'
 
-9. Optionally, handle 'message' events and subsequently monitor for data in the queue
+8. Optionally, handle 'message' events and subsequently monitor for data in the queue
 
         myQueue.on 'message', (queueName, myData) ->  
             console.log 'data = ' + myData 
         ...  
-        myQueue.monitor myQueueName
+        myQueue.monitor timeout, myQueueName
 
-10. When done, quit the Redis client
+  The timeout is in seconds.
 
-        redisClient.quit()
+9. When done, quit the Redis client
 
-  or, more gracefully,
+        myQueue.disconnect()
 
-        myQueue.on 'end', () ->  
-            process.exit()
+  or, alternatively
+
+        myQueue.end()
 
 ###Javascript Usage Example
 
-1. Ensure the Redis server is running. If not, then run
+1. Ensure you have a Redis server installed and running. For example, once installed, you can run it locally by
 
-    redis-server &
+        redis-server &
 
-2. Require `redis` and `node-redis-queue`
+2. Require `node-redis-queue`
 
-        var redis = require('redis');  
         var RedisQueue = require('node-redis-queue');
 
-3. Create a Redis client connection
 
-        var redisClient = redis.createClient(redisPort, redisHost);
+3. Create a RedisQueue instance and connect to Redis
 
-4. Create a RedisQueue instance
+        var myQueue = new RedisQueue();  
+        myQueue.connect();
 
-        var myQueue = new RedisQueue(redisClient, redisQueueTimeout);
-
-5. Optionally, clear previous data from the queue
+4. Optionally, clear previous data from the queue
 
         myQueue.clear(myQueueName);
 
-6. Optionally, push data to your queue
+5. Optionally, push data to your queue
 
         myQueue.push(myQueueName, myData);
 
-7. Optionally, handle error events
+6. Optionally, handle error events
 
         myQueue.on('error', function(error) {  
             console.log('Stopping due to: ' + error);  
             process.exit();
         });
 
-8. Optionally, handle timeout events
+7. Optionally, handle timeout events
 
         myQueue.on('timeout', function() {  
             console.log('timeout event');
         });
 
-9. Optionally, handle 'message' events and subsequently monitor for data in the queue
+8. Optionally, handle 'message' events and subsequently monitor for data in the queue
 
         myQueue.on('message', function(queueName, myData) {  
             console.log('data = ' + myData); 
         });
         ...  
-        myQueue.monitor(myQueueName);
+        myQueue.monitor(timeout, myQueueName);
 
-10. When done, quit the Redis client
+  The timeout is in seconds.
 
-        redisClient.quit()
+9. When done, quit the Redis client
 
-  or, more gracefully,
+        myQueue.disconnect();
 
-        myQueue.on('end', function() {  
-            process.exit()
-        });
+  or, alternatively,
+
+        myQueue.end();
 
 ##Running grunt for development tasks
 
@@ -186,12 +183,15 @@ Changes from the original code include:
 1. Different error handling.
 2. Transparent use of JSON.stringify and JSON.parse to ensure
    that what you get out of the queue is the same as what you put in.
-3. Addition of an optional timeout parameter to the constructor.
-4. Emitting of connection 'end' events.
-5. Emitting of connection 'error' events.
-6. Emitting of Redis wait 'timeout' events.
-7. Addition of tests using jasmine-node.
-8. Addition of demo code in the demo directory.
-9. Changes to the Gruntfile to use coffeelint and jshinti and to run the test suite.
+3. Addition of a timeout parameter to the monitor function.
+4. Addition of a connect function that optionally takes an existing Redis client as an argument.
+5. Emitting of connection 'end' events.
+6. Emitting of connection 'error' events.
+7. Emitting of Redis wait 'timeout' events.
+8. Addition of tests using jasmine-node.
+9. Addition of demo code in the demo directory.
+10. Addition of a disconnect function.
+11. Addition of a stopMonitoring function.
+12. Changes to the Gruntfile to use coffeelint and jshinti and to run the test suite.
 
 

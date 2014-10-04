@@ -1,16 +1,10 @@
 'use strict';
 
-var RedisQueue, clearInitially, config, configurator, myQueue, queueURLs, redis, redisClient, redisQueueName, redisQueueTimeout, stopWorker, urls;
-
-redis = require('redis');
+var RedisQueue, clearInitially, myQueue, queueURLs, stopWorker, urlQueueName, urls;
 
 RedisQueue = require('../../../node-redis-queue');
 
-redisQueueName = 'urlq';
-
-redisQueueTimeout = 1;
-
-redisClient = null;
+urlQueueName = 'urlq';
 
 myQueue = null;
 
@@ -20,13 +14,9 @@ stopWorker = process.argv[2] === 'stop';
 
 urls = ['http://www.google.com', 'http://www.yahoo.com', 'http://ourfamilystory.com', 'http://ourfamilystory.com/pnuke'];
 
-configurator = require('../../lib/redisQueueConfig');
+myQueue = new RedisQueue;
 
-config = configurator.getConfog();
-
-redisClient = configurator.getClient(config);
-
-myQueue = new RedisQueue(redisClient, redisQueueTimeout);
+myQueue.connect();
 
 myQueue.on('end', function() {
   console.log('provider01 finished');
@@ -42,23 +32,24 @@ queueURLs = function() {
   var url, _i, _len;
   for (_i = 0, _len = urls.length; _i < _len; _i++) {
     url = urls[_i];
-    console.log('Pushing "' + url);
-    myQueue.push(redisQueueName, url);
+    console.log('Pushing "' + url + '"');
+    myQueue.push(urlQueueName, url);
   }
 };
 
 if (stopWorker) {
   console.log('Stopping worker');
-  myQueue.push(redisQueueName, '***stop***');
+  myQueue.push(urlQueueName, '***stop***');
+  myQueue.disconnect();
 } else {
   if (clearInitially) {
-    myQueue.clear(redisQueueName, function() {
-      console.log('Cleared "' + redisQueueName + '"');
-      return queueURLs();
+    myQueue.clear(urlQueueName, function() {
+      console.log('Cleared "' + urlQueueName + '"');
+      queueURLs();
+      myQueue.disconnect();
     });
   } else {
     queueURLs();
+    myQueue.disconnect();
   }
 }
-
-redisClient.quit();

@@ -1,12 +1,10 @@
 'use strict'
 SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1
 request = require 'request'
-redis = require 'redis'
-RedisQueue = require '../../../node-redis-queue'
-redisQueueName = 'urlq'
+urlQueueName = 'urlq'
 redisQueueTimeout = 1
-redisClient = null
 myQueue = null
+verbose = process.argv[3] is 'verbose'
 
 if process.argv[2] is 'mem'
   memwatch = require 'memwatch'
@@ -15,11 +13,8 @@ if process.argv[2] is 'mem'
   memwatch.on 'leak', (d) ->
     console.log '>>>LEAK = ', d
 
-configurator = require '../../lib/redisQueueConfig'
-config = configurator.getConfig()
-redisClient = configurator.getClient(config)
-
-myQueue = new RedisQueue redisClient, redisQueueTimeout
+myQueue = new RedisQueue
+myQueue.connect()
 
 myQueue.on 'end', () ->
   console.log 'worker01 detected Redis connection ended'
@@ -30,18 +25,22 @@ myQueue.on 'error', (error) ->
   process.exit()
 
 myQueue.on 'timeout', ->
-  console.log 'worker01 timeout'
+  console.log 'worker01 timeout' if verbose
 
 myQueue.on 'message', (queueName, url) ->
-  console.log 'worker01 processing URL "' + url + '"'
-  if url is '***stop***'
-    console.log 'worker01 stopping'
-    process.exit()
-  request url, (error, response, body) ->
-    if not error and response.statusCode is 200
-      console.log url + ' SHA1 = ' + SHA1 body
-    else
-      console.log error
+  if typeof url is 'string'
+    if url is '***stop***'
+      console.log 'worker01 stopping'
+      process.exit()
+    console.log 'worker01 processing URL "' + url + '"'
+    request url, (error, response, body) ->
+      if not error and response.statusCode is 200
+        sha1 = SHA1 body
+        console.log url + ' SHA1 = ' + sha1
+      else
+        console.log error
+  else
+    console.log 'Unexpected message: ', url
 
-myQueue.monitor redisQueueName
-
+myQueue.monitor redisQueueTimeout, urlQueueName
+console.log 'Waiting for data...'

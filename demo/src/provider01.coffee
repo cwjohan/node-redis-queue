@@ -1,9 +1,6 @@
 'use strict'
-redis = require 'redis'
 RedisQueue = require '../../../node-redis-queue'
-redisQueueName = 'urlq'
-redisQueueTimeout = 1
-redisClient = null
+urlQueueName = 'urlq'
 myQueue = null
 clearInitially = process.argv[2] is 'clear'
 stopWorker = process.argv[2] is 'stop'
@@ -14,10 +11,8 @@ urls = [
   'http://ourfamilystory.com/pnuke'
 ]
 
-configurator = require '../../lib/redisQueueConfig'
-config = configurator.getConfog()
-redisClient = configurator.getClient(config)
-myQueue = new RedisQueue redisClient, redisQueueTimeout
+myQueue = new RedisQueue
+myQueue.connect()
 
 myQueue.on 'end', () ->
   console.log 'provider01 finished'
@@ -29,20 +24,23 @@ myQueue.on 'error', (error) ->
 
 queueURLs = () ->
   for url in urls
-    console.log 'Pushing "' + url
-    myQueue.push redisQueueName, url
+    console.log 'Pushing "' + url + '"'
+    myQueue.push urlQueueName, url
   return
 
 if stopWorker
   console.log 'Stopping worker'
-  myQueue.push redisQueueName, '***stop***'
+  myQueue.push urlQueueName, '***stop***'
+  myQueue.disconnect()
 else
   if clearInitially
-    myQueue.clear redisQueueName, () ->
-      console.log 'Cleared "' + redisQueueName + '"'
+    myQueue.clear urlQueueName, () ->
+      console.log 'Cleared "' + urlQueueName + '"'
       queueURLs()
+      myQueue.disconnect()
+      return
   else
     queueURLs()
+    myQueue.disconnect()
 
-redisClient.quit()
 

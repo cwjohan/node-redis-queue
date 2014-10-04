@@ -1,7 +1,6 @@
 'use strict'
 RedisQueue = require '..'
-redisQueueTimeout = 0
-redisClient = null
+redisQueueTimeout = 1
 myQueue = null
 expectedItems = [
     'item one',
@@ -12,14 +11,8 @@ itemCnt = 0
 
 describe 'RedisQueue', () ->
   it 'must connect to redis-server', (done) ->
-    configurator = require './redisQueueConfig'
-    config = configurator.getConfig()
-    redisClient = configurator.getClient(config)
-    expect(redisClient).toBeDefined()
-    done()
-
-  it 'constructor must return a queue object', (done) ->
-    myQueue = new RedisQueue redisClient, redisQueueTimeout
+    myQueue = new RedisQueue
+    myQueue.connect()
     expect(typeof myQueue).toEqual 'object'
 
     myQueue.on 'error', (error) ->
@@ -49,9 +42,9 @@ describe 'RedisQueue', () ->
       console.log 'Pushing message "' + item + '" to queue "test-queue"'
       myQueue.push 'test-queue', item
 
-    myQueue.monitor 'test-queue'
+    myQueue.monitor redisQueueTimeout, 'test-queue'
 
   it 'quits Redis cleanly', () ->
     console.log 'Quitting redis'
-    expect(redisClient.end()).toBeUndefined()
+    expect(myQueue.end()).toEqual true
 
