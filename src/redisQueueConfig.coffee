@@ -1,5 +1,4 @@
 'use strict'
-fs = require 'fs'
 
 exports.getConfig = (configFile = '../redis-queue-config.json') ->
   config = require configFile

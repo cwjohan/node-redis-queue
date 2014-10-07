@@ -19,7 +19,7 @@ class RedisQueue extends events.EventEmitter
     @client.on 'end', () =>
       @stop = true
       @emit 'end'
-    return @client
+    this
 
   push: (key, payload) ->
     @client.lpush key, JSON.stringify(payload)
