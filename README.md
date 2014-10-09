@@ -29,11 +29,13 @@ is desired.
 3. Create a RedisQueue instance and connect to Redis
 
         myQueue = new RedisQueue  
-        myQueue.connect()
+        myQueue.connect ->
+          console.log 'ready'
+          myMainLogic()
 
   Alternatively, you can provide an existing Redis connection
 
-        myQueue.connect redisConn
+        myQueue.attach redisConn
 
 4. Optionally, clear previous data from the queue
 
@@ -67,7 +69,7 @@ is desired.
 
         myQueue.disconnect()
 
-  or, alternatively
+  or, alternatively, if monitoring,
 
         myQueue.end()
 
@@ -154,13 +156,13 @@ package.json file.
 
 ##Running the demo 01 code
 
-1. Open two Git Bash console windows.
-2. In one of the console windows, run `redis-server &` to start the Redis server in the background.
-3. Run `node lib/work01.js` in the first console window. It will wait for some data to appear in the queue.
-4. In the second console window, run `node lib/provider01.js`, which will place two items in the queue. Shortly
-   thereafter, the worker01 process will pick up the two items and display them.
-5. Repeat step 4.
-6. In the second console window, run `node lib/provider01.js stop`, which will put a stop command in the queue. Shortly
+1. Open three Git Bash console windows.
+2. In the first console window, run `redis-server` or `redis-server &` to start the Redis server in the background.
+3. In the second console window Run `node lib/work01.js`. It will wait for some data to appear in the queue.
+4. In the third console window, run `node lib/provider01.js`, which will place four URLs in the queue. Shortly
+   thereafter, the worker01 process will pick up the four URLs and display them, fetch a page body for each, and compute an SHA1 value for each.
+5. Repeat step 4 a few times.
+6. In the third console window, run `node lib/provider01.js stop`, which will put a stop command in the queue. Shortly
    thereafter, the worker01 process will stop.
 
 Note that, when running worker01, one optionally may use a 'mem' parameter to monitor memory usage. For example:
@@ -169,7 +171,7 @@ Note that, when running worker01, one optionally may use a 'mem' parameter to mo
 
 ##Running the demo 02 code
 
-Not available yet.
+The code now is available, but is awaiting documentation here.
 
 ##Note:
 
@@ -178,7 +180,7 @@ retains the same license. I chose not to fork the project directly since I
 want to be free to make major changes and to have control over future changes
 since this code will be published in other media.
 
-Changes from the original code include:
+Changes from the original code include, among others:
 
 1. Different error handling.
 2. Transparent use of JSON.stringify and JSON.parse to ensure
@@ -188,10 +190,10 @@ Changes from the original code include:
 5. Emitting of connection 'end' events.
 6. Emitting of connection 'error' events.
 7. Emitting of Redis wait 'timeout' events.
-8. Addition of tests using jasmine-node.
+8. Addition of tests using jasmine-node. Run by `npm test`.
 9. Addition of demo code in the demo directory.
 10. Addition of a disconnect function.
 11. Addition of a stopMonitoring function.
-12. Changes to the Gruntfile to use coffeelint and jshinti and to run the test suite.
+12. Changes to the Gruntfile to use coffeelint and jshint and to run the test suite.
 
 
