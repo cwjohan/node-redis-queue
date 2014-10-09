@@ -1,4 +1,6 @@
 'use strict'
+# For each URL in the urls list, this app puts it into the 'urlq' queue.
+#
 # Usage:
 #   cd demo/lib
 #   node provider01.js clear
