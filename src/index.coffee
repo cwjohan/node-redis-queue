@@ -9,14 +9,22 @@ class RedisQueue extends events.EventEmitter
     @config = @configurator.getConfig()
     @stop = false
 
-  connect: (@client = null) ->
-    unless @client
-      @client = @configurator.getClient(@config)
+  connect: (onReady) ->
+    @client = @configurator.getClient(@config)
+    @attach @client, onReady
       
+  attach: (@client, onReady) ->
+    unless @client instanceof Object
+      throw new RedisQueueError 'No client supplied'
+    @client.on 'ready', () =>
+      @ready = true
+      onReady()
+      @emit 'ready'
     @client.on 'error', (err) =>
       @stop = true
       @emit 'error', err
     @client.on 'end', () =>
+      @ready = false
       @stop = true
       @emit 'end'
     this
@@ -47,6 +55,7 @@ class RedisQueue extends events.EventEmitter
 
   disconnect: () ->
     @client.quit()
+    true
 
   end: () ->
     @client.end()

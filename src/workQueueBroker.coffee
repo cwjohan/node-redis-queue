@@ -4,19 +4,22 @@ events = require 'events'
 RedisQueue = require './index'
 
 class WorkQueue
-  constructor: (@broker, @queueName, @options) ->
+  constructor: (@qmgr, @queueName, @options) ->
     return this
 
   subscribe: (@onJob) ->
-    @broker.subscribe @queueName, @onJob
     return this
 
   publish: (payload) ->
-    @broker.qmgr.push @queueName, payload
+    @qmgr.push @queueName, payload
+    return this
+
+  unsubscribe: () ->
+    @onJob = null
     return this
 
   clear: (onClearComplete) ->
-    @broker.qmgr.clear(@queueName, onClearComplete)
+    @qmgr.clear @queueName, onClearComplete
     return this
 
 class WorkQueueBrokerError extends Error
@@ -25,6 +28,18 @@ class WorkQueueBroker extends events.EventEmitter
   constructor: () ->
     @queues = {}
     @qmgr = new RedisQueue()
+    return this
+
+  connect: (onReady) ->
+    @qmgr.connect onReady
+    @initEmitters_()
+    return this
+
+  attach: (@client, onReady) ->
+    @qmgr.attach @client, onReady
+    @initEmitters_()
+
+  initEmitters_: ->
     @qmgr.on 'ready', () =>
       @emit 'ready'
     @qmgr.on 'error', (err) =>
@@ -36,15 +51,9 @@ class WorkQueueBroker extends events.EventEmitter
     @qmgr.on 'message', (queueName, payload) =>
       if @isValidQueueName(queueName) and @queues[queueName].onJob
         @queues[queueName].onJob payload
-    return this
-
-  connect: (onReady, @client) ->
-    @qmgr.on 'ready', onReady
-    @qmgr.connect(@client)
-    return this
-
+    
   createQueue: (queueName, options) ->
-    return @queues[queueName] = new WorkQueue this, queueName, options
+    return @queues[queueName] = new WorkQueue @qmgr, queueName, options
 
   publish: (queueName, payload) ->
     if @isValidQueueName
@@ -53,7 +62,6 @@ class WorkQueueBroker extends events.EventEmitter
 
   subscribe: (queueName, onJob) ->
     if @isValidQueueName queueName
-      console.log 'subscribing to "' + queueName + '"'
       @queues[queueName].onJob = onJob
     return this
 

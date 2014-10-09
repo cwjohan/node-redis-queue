@@ -1,5 +1,5 @@
 'use strict'
-RedisQueue = require '..'
+RedisQueue = require './'
 redisQueueTimeout = 1
 myQueue = null
 expectedItems = [
@@ -12,16 +12,17 @@ itemCnt = 0
 describe 'RedisQueue', () ->
   it 'must connect to redis-server', (done) ->
     myQueue = new RedisQueue
-    myQueue.connect()
-    expect(typeof myQueue).toEqual 'object'
+    myQueue.connect () ->
+      console.log 'redis queue ready'
+      expect(typeof myQueue).toEqual 'object'
 
-    myQueue.on 'error', (error) ->
-      console.log '>>>' + error
-      process.exit()
+      myQueue.on 'error', (error) ->
+        console.log '>>>' + error
+        process.exit()
 
-    myQueue.clear 'test-queue', () ->
-      console.log 'Cleared "test-queue"'
-      done()
+      myQueue.clear 'test-queue', () ->
+        console.log 'Cleared "test-queue"'
+        done()
 
   it 'must retrieve pushed items in correct order', (done) ->
     myQueue.on 'message', (queueName, payload) ->
@@ -45,6 +46,6 @@ describe 'RedisQueue', () ->
     myQueue.monitor redisQueueTimeout, 'test-queue'
 
   it 'quits Redis cleanly', () ->
-    console.log 'Quitting redis'
+    console.log 'Ending redis queue'
     expect(myQueue.end()).toEqual true
 
