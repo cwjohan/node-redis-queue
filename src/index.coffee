@@ -18,7 +18,7 @@ class RedisQueue extends events.EventEmitter
       throw new RedisQueueError 'No client supplied'
     @client.on 'ready', () =>
       @ready = true
-      onReady()
+      onReady() if onReady and typeof onReady is 'function'
       @emit 'ready'
     @client.on 'error', (err) =>
       @stop = true
@@ -47,8 +47,8 @@ class RedisQueue extends events.EventEmitter
       
       @monitor timeout, keysToMonitor... unless @stop
 
-  clear: (keysToClear...) ->
-    @client.del keysToClear...
+  clear: (keysToClear..., onClear) ->
+    @client.del keysToClear..., onClear
 
   stopMonitoring: () ->
     @stop = true

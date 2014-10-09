@@ -1,4 +1,19 @@
 'use strict'
+# For each URL in the urls list, this app puts a work request in 'urlq' queue
+# and waits for the results to be returned in 'urlshaq01' or whatever,
+# depending on the providerId parameter.
+#
+# Usage:
+#     cd demo/lib
+#     node provider02.js <providerId> [clear]
+#   or
+#     node provider02.js stop
+#
+#   where <providerId> is something to make this provider instance unique,
+#   such as "01", "02", "foo", "bar", or whatever.
+#
+#   Use this app in conjunction with worker02.js. See the worker02 source code
+#   for more details.
 RedisQueue = require '../../../node-redis-queue'
 urlQueueName = 'urlq'
 providerId = process.argv[2]
@@ -18,39 +33,41 @@ urls = [
 resultCnt = 0
 
 myQueue = new RedisQueue
-myQueue.connect()
+myQueue.connect ->
+  console.log 'connected'
+  initEventHandlers()
+  main()
 
-myQueue.on 'end', () ->
-  console.log 'provider01 finished'
-  process.exit()
+initEventHandlers = ->
+  myQueue.on 'end', () ->
+    console.log 'provider01 finished'
+    process.exit()
 
-myQueue.on 'error', (error) ->
-  console.log 'provider01 stopping due to: ' + error
-  process.exit()
+  myQueue.on 'error', (error) ->
+    console.log 'provider01 stopping due to: ' + error
+    process.exit()
 
-myQueue.on 'message', (queueName, result) ->
-  console.log 'result = ', result
-  myQueue.disconnect() if ++resultCnt >= urls.length
+  myQueue.on 'message', (queueName, result) ->
+    console.log 'result = ', result
+    myQueue.disconnect() if ++resultCnt >= urls.length
 
-queueURLs = () ->
-  for url in urls
-    console.log 'Pushing "' + url + '"'
-    myQueue.push urlQueueName, {url: url, q: resultQueueName}
-  return
-
-if stopWorker
-  console.log 'Stopping worker'
-  myQueue.push urlQueueName, '***stop***'
-  myQueue.disconnect()
-else
+main = ->
   if clearInitially
     myQueue.clear urlQueueName, () ->
       console.log 'Cleared "' + urlQueueName + '"'
-      queueURLs()
-      return
+      enqueueURLs()
   else
-    queueURLs()
+    unless stopWorker
+      enqueueURLs()
+    else
+      console.log 'Stopping worker'
+      myQueue.push urlQueueName, '***stop***'
+      myQueue.disconnect()
 
-myQueue.monitor resultQueueTimeout, resultQueueName
-
+enqueueURLs = () ->
+  for url in urls
+    console.log 'Pushing "' + url + '"'
+    myQueue.push urlQueueName, {url: url, q: resultQueueName}
+  myQueue.monitor resultQueueTimeout, resultQueueName
+  console.log 'waiting for responses from worker...'
 

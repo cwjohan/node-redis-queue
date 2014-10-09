@@ -1,4 +1,13 @@
 'use strict'
+# Usage:
+#   cd demo/lib
+#   node provider01.js clear
+#   node provider01.js
+#   ...
+#   node provider01.js stop
+#
+#   Use this app in conjunction with worker01.js. See the worker01 source code
+#   for more details.
 RedisQueue = require '../../../node-redis-queue'
 urlQueueName = 'urlq'
 myQueue = null
@@ -12,35 +21,37 @@ urls = [
 ]
 
 myQueue = new RedisQueue
-myQueue.connect()
+myQueue.connect ->
+  console.log 'connected'
+  initEventHandlers()
+  main()
 
-myQueue.on 'end', () ->
-  console.log 'provider01 finished'
-  process.exit()
+initEventHandlers = ->
+  myQueue.on 'end', () ->
+    console.log 'provider01 finished'
+    process.exit()
 
-myQueue.on 'error', (error) ->
-  console.log 'provider01 stopping due to: ' + error
-  process.exit()
+  myQueue.on 'error', (error) ->
+    console.log 'provider01 stopping due to: ' + error
+    process.exit()
 
-queueURLs = () ->
-  for url in urls
-    console.log 'Pushing "' + url + '"'
-    myQueue.push urlQueueName, url
-  return
-
-if stopWorker
-  console.log 'Stopping worker'
-  myQueue.push urlQueueName, '***stop***'
-  myQueue.disconnect()
-else
+main = ->
   if clearInitially
     myQueue.clear urlQueueName, () ->
       console.log 'Cleared "' + urlQueueName + '"'
-      queueURLs()
+      enqueueURLs()
       myQueue.disconnect()
-      return
   else
-    queueURLs()
+    unless stopWorker
+      enqueueURLs()
+    else
+      console.log 'Stopping worker'
+      myQueue.push urlQueueName, '***stop***'
     myQueue.disconnect()
 
+enqueueURLs = ->
+  for url in urls
+    console.log 'Pushing "' + url + '" to queue "' + urlQueueName + '"'
+    myQueue.push urlQueueName, url
+  return
 

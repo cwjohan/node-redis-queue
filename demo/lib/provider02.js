@@ -1,6 +1,6 @@
 'use strict';
 
-var RedisQueue, clearInitially, myQueue, providerId, queueURLs, resultCnt, resultQueueName, resultQueueTimeout, stopWorker, urlQueueName, urls;
+var RedisQueue, clearInitially, enqueueURLs, initEventHandlers, main, myQueue, providerId, resultCnt, resultQueueName, resultQueueTimeout, stopWorker, urlQueueName, urls;
 
 RedisQueue = require('../../../node-redis-queue');
 
@@ -27,26 +27,47 @@ resultCnt = 0;
 
 myQueue = new RedisQueue;
 
-myQueue.connect();
-
-myQueue.on('end', function() {
-  console.log('provider01 finished');
-  return process.exit();
+myQueue.connect(function() {
+  console.log('connected');
+  initEventHandlers();
+  return main();
 });
 
-myQueue.on('error', function(error) {
-  console.log('provider01 stopping due to: ' + error);
-  return process.exit();
-});
+initEventHandlers = function() {
+  myQueue.on('end', function() {
+    console.log('provider01 finished');
+    return process.exit();
+  });
+  myQueue.on('error', function(error) {
+    console.log('provider01 stopping due to: ' + error);
+    return process.exit();
+  });
+  return myQueue.on('message', function(queueName, result) {
+    console.log('result = ', result);
+    if (++resultCnt >= urls.length) {
+      return myQueue.disconnect();
+    }
+  });
+};
 
-myQueue.on('message', function(queueName, result) {
-  console.log('result = ', result);
-  if (++resultCnt >= urls.length) {
-    return myQueue.disconnect();
+main = function() {
+  if (clearInitially) {
+    return myQueue.clear(urlQueueName, function() {
+      console.log('Cleared "' + urlQueueName + '"');
+      return enqueueURLs();
+    });
+  } else {
+    if (!stopWorker) {
+      return enqueueURLs();
+    } else {
+      console.log('Stopping worker');
+      myQueue.push(urlQueueName, '***stop***');
+      return myQueue.disconnect();
+    }
   }
-});
+};
 
-queueURLs = function() {
+enqueueURLs = function() {
   var url, _i, _len;
   for (_i = 0, _len = urls.length; _i < _len; _i++) {
     url = urls[_i];
@@ -56,21 +77,6 @@ queueURLs = function() {
       q: resultQueueName
     });
   }
+  myQueue.monitor(resultQueueTimeout, resultQueueName);
+  return console.log('waiting for responses from worker...');
 };
-
-if (stopWorker) {
-  console.log('Stopping worker');
-  myQueue.push(urlQueueName, '***stop***');
-  myQueue.disconnect();
-} else {
-  if (clearInitially) {
-    myQueue.clear(urlQueueName, function() {
-      console.log('Cleared "' + urlQueueName + '"');
-      queueURLs();
-    });
-  } else {
-    queueURLs();
-  }
-}
-
-myQueue.monitor(resultQueueTimeout, resultQueueName);
