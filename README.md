@@ -158,11 +158,12 @@ package.json file.
 
 1. Open three Git Bash console windows.
 2. In the first console window, run `redis-server` or `redis-server &` to start the Redis server in the background.
-3. In the second console window Run `node lib/work01.js`. It will wait for some data to appear in the queue.
-4. In the third console window, run `node lib/provider01.js`, which will place four URLs in the queue. Shortly
+3. cd demo/lib
+4. In the second console window Run `node work01.js`. It will wait for some data to appear in the queue.
+5. In the third console window, run `node provider01.js`, which will place four URLs in the queue. Shortly
    thereafter, the worker01 process will pick up the four URLs and display them, fetch a page body for each, and compute an SHA1 value for each.
-5. Repeat step 4 a few times.
-6. In the third console window, run `node lib/provider01.js stop`, which will put a stop command in the queue. Shortly
+6. Repeat step 4 a few times.
+7. In the third console window, run `node provider01.js stop`, which will put a stop command in the queue. Shortly
    thereafter, the worker01 process will stop.
 
 Note that, when running worker01, one optionally may use a 'mem' parameter to monitor memory usage. For example:
