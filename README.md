@@ -162,7 +162,7 @@ package.json file.
 4. In the second console window Run `node work01.js`. It will wait for some data to appear in the queue.
 5. In the third console window, run `node provider01.js`, which will place four URLs in the queue. Shortly
    thereafter, the worker01 process will pick up the four URLs and display them, fetch a page body for each, and compute an SHA1 value for each.
-6. Repeat step 4 a few times.
+6. Repeat step 5 a few times.
 7. In the third console window, run `node provider01.js stop`, which will put a stop command in the queue. Shortly
    thereafter, the worker01 process will stop.
 
