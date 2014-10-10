@@ -41,7 +41,7 @@ class RedisQueue extends events.EventEmitter
           @emit 'message', replies[0], JSON.parse replies[1]
         else
           if replies?
-            @emit new RedisQueueError 'Replies not Array of two elements'
+            @emit 'error', new RedisQueueError 'Replies not Array of two elements'
 
   monitor: (timeout, keysToMonitor...) ->
     @client.brpop keysToMonitor..., timeout, (err, replies) =>
@@ -52,7 +52,7 @@ class RedisQueue extends events.EventEmitter
           @emit 'message', replies[0], JSON.parse replies[1]
         else
           if replies?
-            @emit new RedisQueueError 'Replies not Array of two elements'
+            @emit 'error', new RedisQueueError 'Replies not Array of two elements'
           else
             @emit 'timeout'
       
