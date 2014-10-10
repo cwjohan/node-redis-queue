@@ -9,7 +9,7 @@ expectedItems = [
 ]
 itemCnt = 0
 
-describe 'RedisQueue', () ->
+describe 'RedisQueue monitor', () ->
   it 'must connect to redis-server', (done) ->
     myQueue = new RedisQueue
     myQueue.connect () ->

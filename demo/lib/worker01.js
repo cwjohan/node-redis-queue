@@ -1,6 +1,6 @@
 'use strict';
 
-var RedisQueue, SHA1, checkArgs, initEventHandlers, myQueue, redisQueueTimeout, request, urlQueueName, verbose;
+var RedisQueue, SHA1, checkArgs, done, initEventHandlers, myQueue, request, urlQueueName, verbose;
 
 RedisQueue = require('../../../node-redis-queue');
 
@@ -9,8 +9,6 @@ request = require('request');
 SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1;
 
 urlQueueName = 'urlq';
-
-redisQueueTimeout = 1;
 
 myQueue = null;
 
@@ -21,7 +19,7 @@ myQueue = new RedisQueue;
 myQueue.connect(function() {
   checkArgs();
   initEventHandlers();
-  myQueue.monitor(redisQueueTimeout, urlQueueName);
+  myQueue.pop(urlQueueName);
   return console.log('Waiting for data...');
 });
 
@@ -41,11 +39,11 @@ checkArgs = function() {
 initEventHandlers = function() {
   myQueue.on('end', function() {
     console.log('worker01 detected Redis connection ended');
-    return process.exit();
+    return done();
   });
   myQueue.on('error', function(error) {
     console.log('worker01 stopping due to: ' + error);
-    return process.exit();
+    return done();
   });
   myQueue.on('timeout', function() {
     if (verbose) {
@@ -53,23 +51,30 @@ initEventHandlers = function() {
     }
   });
   return myQueue.on('message', function(queueName, url) {
+    console.log('message url = ' + url);
     if (typeof url === 'string') {
       if (url === '***stop***') {
         console.log('worker01 stopping');
-        process.exit();
+        done();
       }
       console.log('worker01 processing URL "' + url + '"');
       return request(url, function(error, response, body) {
         var sha1;
         if (!error && response.statusCode === 200) {
           sha1 = SHA1(body);
-          return console.log(url + ' SHA1 = ' + sha1);
+          console.log(url + ' SHA1 = ' + sha1);
+          myQueue.pop(urlQueueName);
         } else {
-          return console.log(error);
+          console.log(error);
         }
       });
     } else {
       return console.log('Unexpected message: ', url);
     }
   });
+};
+
+done = function() {
+  myQueue.end();
+  return process.exit();
 };

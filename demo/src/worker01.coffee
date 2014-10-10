@@ -16,7 +16,6 @@ RedisQueue = require '../../../node-redis-queue'
 request = require 'request'
 SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1
 urlQueueName = 'urlq'
-redisQueueTimeout = 1
 myQueue = null
 verbose = process.argv[3] is 'verbose'
 
@@ -24,7 +23,7 @@ myQueue = new RedisQueue
 myQueue.connect ->
   checkArgs()
   initEventHandlers()
-  myQueue.monitor redisQueueTimeout, urlQueueName
+  myQueue.pop urlQueueName
   console.log 'Waiting for data...'
 
 checkArgs = ->
@@ -38,27 +37,35 @@ checkArgs = ->
 initEventHandlers = ->
   myQueue.on 'end', () ->
     console.log 'worker01 detected Redis connection ended'
-    process.exit()
+    done()
 
   myQueue.on 'error', (error) ->
     console.log 'worker01 stopping due to: ' + error
-    process.exit()
+    done()
 
   myQueue.on 'timeout', ->
     console.log 'worker01 timeout' if verbose
 
   myQueue.on 'message', (queueName, url) ->
+    console.log 'message url = ' + url
     if typeof url is 'string'
       if url is '***stop***'
         console.log 'worker01 stopping'
-        process.exit()
+        done()
       console.log 'worker01 processing URL "' + url + '"'
       request url, (error, response, body) ->
         if not error and response.statusCode is 200
           sha1 = SHA1 body
           console.log url + ' SHA1 = ' + sha1
+          myQueue.pop urlQueueName
         else
           console.log error
+        return
     else
       console.log 'Unexpected message: ', url
+
+done = ->
+  myQueue.end()
+  process.exit()
+
 

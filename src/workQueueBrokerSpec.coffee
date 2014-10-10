@@ -1,5 +1,4 @@
 'use strict'
-monitorTimeout = 1
 myWorkQueue1 = null
 myWorkQueue2 = null
 myBroker = null
@@ -26,8 +25,6 @@ describe 'WorkQueueBroker', () ->
       myBroker.on 'error', (error) ->
         console.log '>>>' + error
         process.exit()
-      myBroker.on 'timeout', ->
-        console.log '>>>timeout'
       myBroker.on 'end', ->
         console.log '>>>End Redis connection'
       done()
@@ -53,6 +50,8 @@ describe 'WorkQueueBroker', () ->
       expect(payload).toEqual expectedItemsQ1[itemCntQ1++]
       if itemCntQ1 >= expectedItemsQ1.length
         done() if ++queueDoneCnt >= 2
+        return false
+      return true
 
     console.log 'subscribing to queue "test-queue-2"'
     myWorkQueue2.subscribe (payload) ->
@@ -60,6 +59,8 @@ describe 'WorkQueueBroker', () ->
       expect(payload).toEqual expectedItemsQ2[itemCntQ2++]
       if itemCntQ2 >= expectedItemsQ2.length
         done() if ++queueDoneCnt >= 2
+        return false
+      return true
 
     for item in expectedItemsQ1
       console.log 'publishing "' + item + '" to queue "test-queue-1"'
@@ -69,7 +70,7 @@ describe 'WorkQueueBroker', () ->
       console.log 'publishing "' + item + '" to queue "test-queue-2"'
       myWorkQueue2.publish item
 
-    myBroker.monitor(monitorTimeout)
+    myBroker.begin()
 
   it 'quits Redis cleanly', () ->
     console.log 'Ending work queue broker'

@@ -50,7 +50,8 @@ class WorkQueueBroker extends events.EventEmitter
       @emit 'end'
     @qmgr.on 'message', (queueName, payload) =>
       if @isValidQueueName(queueName) and @queues[queueName].onJob
-        @queues[queueName].onJob payload
+        if @queues[queueName].onJob payload
+          @qmgr.pop queueName
     
   createQueue: (queueName, options) ->
     return @queues[queueName] = new WorkQueue @qmgr, queueName, options
@@ -65,6 +66,10 @@ class WorkQueueBroker extends events.EventEmitter
       @queues[queueName].onJob = onJob
     return this
 
+  begin: ->
+    for queueName in Object.keys @queues
+      @qmgr.pop queueName
+
   unsubscribe: (queueName) ->
     if @isValidQueueName queueName
       @queues[queueName].onJob = null
@@ -73,13 +78,6 @@ class WorkQueueBroker extends events.EventEmitter
   destroyQueue: (queueName) ->
     if @isValidQueueName queueName
       delete @queues[queueName]
-    return this
-
-  monitor: (timeout = 1) ->
-    args = Object.keys @queues
-    throw new WorkQueueBrokerError 'No queues exist' unless args.length > 0
-    args.unshift timeout
-    @qmgr.monitor.apply @qmgr, args
     return this
 
   disconnect: () ->

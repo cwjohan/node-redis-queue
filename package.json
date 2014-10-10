@@ -1,6 +1,6 @@
 {
     "name": "node-redis-queue",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "A simple, lightweight queue using Redis lpush and brpop",
     "main": "lib/index.js",
     "repository": {
@@ -13,7 +13,7 @@
     },
     "license": "MIT",
     "dependencies": {
-        "redis": "~0.8.2"
+        "redis": "~0.12.1"
     },
     "devDependencies": {
         "grunt": "~0.4.1",

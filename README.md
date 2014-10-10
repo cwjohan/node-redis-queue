@@ -174,6 +174,10 @@ Note that, when running worker01, one optionally may use a 'mem' parameter to mo
 
 The code now is available, but is awaiting documentation here.
 
+##Running the demo 03 code
+
+The code now is available, but is awaiting documentation here.
+
 ##Note:
 
 This work is derived from node-simple-redis-queue v0.9.3 by James Smith and
@@ -196,5 +200,6 @@ Changes from the original code include, among others:
 10. Addition of a disconnect function.
 11. Addition of a stopMonitoring function.
 12. Changes to the Gruntfile to use coffeelint and jshint and to run the test suite.
+13. Addition of workQueueBroker and pub/sub functionality
 
 
