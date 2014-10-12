@@ -8,8 +8,7 @@ class WorkQueue
     return this
 
   subscribe: (@onJob) ->
-    process.nextTick =>
-      @qmgr.pop @queueName
+    process.nextTick => @qmgr.pop @queueName
     return this
 
   publish: (payload) ->
@@ -19,9 +18,6 @@ class WorkQueue
   unsubscribe: ->
     @onJob = null
     return this
-
-  begin: ->
-    @qmgr.pop @queueName
 
   clear: (onClearComplete) ->
     @qmgr.clear @queueName, onClearComplete

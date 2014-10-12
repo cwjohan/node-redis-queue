@@ -12,8 +12,6 @@ myBroker.connect () ->
   initEventHandlers()
   createWorkQueues()
   subscribeToQueues()
-  myWorkQueue1.begin()
-  myWorkQueue2.begin()
   console.log 'waiting for data...'
 
 initEventHandlers = ->

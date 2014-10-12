@@ -19,8 +19,6 @@ myBroker.connect(function() {
   initEventHandlers();
   createWorkQueues();
   subscribeToQueues();
-  myWorkQueue1.begin();
-  myWorkQueue2.begin();
   return console.log('waiting for data...');
 });
 
