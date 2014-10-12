@@ -57,7 +57,7 @@ initEventHandlers = ->
           myQueue.push req.q, {url: req.url, sha1: sha1}
         else
           console.log error
-          myQueue.push req.q, {url: req.url, err: error}
+          myQueue.push req.q, {url: req.url, err: error, code: response.statusCode}
     else
       if typeof req is 'string' and req is '***stop***'
         console.log 'worker01 stopping'

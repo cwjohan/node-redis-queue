@@ -66,7 +66,8 @@ initEventHandlers = function() {
           console.log(error);
           return myQueue.push(req.q, {
             url: req.url,
-            err: error
+            err: error,
+            code: response.statusCode
           });
         }
       });

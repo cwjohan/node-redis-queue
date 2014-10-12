@@ -1,12 +1,14 @@
 'use strict';
 
-var WorkQueueBroker, createWorkQueues, end, initEventHandlers, myBroker, myWorkQueue1, myWorkQueue2, subscribeToQueues;
+var WorkQueueBroker, createWorkQueues, done, initEventHandlers, myBroker, myWorkQueue1, myWorkQueue2, queuesActive, subscribeToQueues;
 
 myWorkQueue1 = null;
 
 myWorkQueue2 = null;
 
 myBroker = null;
+
+queuesActive = 0;
 
 WorkQueueBroker = require('../../lib/workQueueBroker');
 
@@ -17,7 +19,8 @@ myBroker.connect(function() {
   initEventHandlers();
   createWorkQueues();
   subscribeToQueues();
-  myBroker.begin();
+  myWorkQueue1.begin();
+  myWorkQueue2.begin();
   return console.log('waiting for data...');
 });
 
@@ -33,29 +36,30 @@ initEventHandlers = function() {
 
 createWorkQueues = function() {
   myWorkQueue1 = myBroker.createQueue('work-queue-1');
-  return myWorkQueue2 = myBroker.createQueue('work-queue-2');
+  myWorkQueue2 = myBroker.createQueue('work-queue-2');
+  return queuesActive = 2;
 };
 
 subscribeToQueues = function() {
   console.log('subscribing to queue "test-queue-1"');
-  myWorkQueue1.subscribe(function(payload) {
+  myWorkQueue1.subscribe(function(payload, ack) {
     console.log('received message "' + payload + '" in queue "work-queue-1"');
-    if (payload === '***stop***') {
+    if (payload === '***stop***' && --queuesActive === 0) {
       end();
     }
-    return true;
+    return ack();
   });
   console.log('subscribing to queue "test-queue-2"');
-  return myWorkQueue2.subscribe(function(payload) {
+  return myWorkQueue2.subscribe(function(payload, ack) {
     console.log('received message "' + payload + '" in queue "work-queue-2"');
-    if (payload === '***stop***') {
-      end();
+    if (payload === '***stop***' && --queuesActive === 0) {
+      done();
     }
-    return true;
+    return ack();
   });
 };
 
-end = function() {
+done = function() {
   console.log('quitting');
   myBroker.end();
   return process.exit();

@@ -9,10 +9,10 @@ expectedItems = [
 ]
 itemCnt = 0
 
-describe 'RedisQueue monitor', () ->
+describe 'RedisQueue monitor', ->
   it 'must connect to redis-server', (done) ->
     myQueue = new RedisQueue
-    myQueue.connect () ->
+    myQueue.connect ->
       console.log 'redis queue ready'
       expect(typeof myQueue).toEqual 'object'
 
@@ -20,7 +20,7 @@ describe 'RedisQueue monitor', () ->
         console.log '>>>' + error
         process.exit()
 
-      myQueue.clear 'test-queue', () ->
+      myQueue.clear 'test-queue', ->
         console.log 'Cleared "test-queue"'
         done()
 
@@ -33,10 +33,10 @@ describe 'RedisQueue monitor', () ->
       if itemCnt >= expectedItems.length
         done()
         
-    myQueue.on 'timeout', () ->
+    myQueue.on 'timeout', ->
       console.log '>>>Timeout...'
 
-    myQueue.on 'end', () ->
+    myQueue.on 'end', ->
       console.log '>>>End redis connection'
 
     for item in expectedItems
@@ -45,7 +45,7 @@ describe 'RedisQueue monitor', () ->
 
     myQueue.monitor redisQueueTimeout, 'test-queue'
 
-  it 'quits Redis cleanly', () ->
+  it 'quits Redis cleanly', ->
     console.log 'Ending redis queue'
     expect(myQueue.end()).toEqual true
 

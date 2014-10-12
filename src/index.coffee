@@ -4,7 +4,7 @@ events = require 'events'
 class RedisQueueError extends Error
 
 class RedisQueue extends events.EventEmitter
-  constructor: () ->
+  constructor: ->
     @configurator = require './redisQueueConfig'
     @config = @configurator.getConfig()
     @stop = false
@@ -16,14 +16,14 @@ class RedisQueue extends events.EventEmitter
   attach: (@client, onReady) ->
     unless @client instanceof Object
       throw new RedisQueueError 'No client supplied'
-    @client.on 'ready', () =>
+    @client.on 'ready', =>
       @ready = true
       onReady() if onReady and typeof onReady is 'function'
       @emit 'ready'
     @client.on 'error', (err) =>
       @stop = true
       @emit 'error', err
-    @client.on 'end', () =>
+    @client.on 'end', =>
       @ready = false
       @stop = true
       @emit 'end'
@@ -61,21 +61,21 @@ class RedisQueue extends events.EventEmitter
   clear: (keysToClear..., onClear) ->
     @client.del keysToClear..., onClear
 
-  stopMonitoring: () ->
+  stopMonitoring: ->
     @stop = true
 
-  disconnect: () ->
+  disconnect: ->
     @client.quit()
     true
 
-  end: () ->
+  end: ->
     @client.end()
     true
 
-  config: () ->
+  config: ->
     @config
 
-  client: () ->
+  client: ->
     @client
 
 module.exports = RedisQueue

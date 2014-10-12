@@ -17,10 +17,10 @@ itemCntQ2 = 0
 
 WorkQueueBroker = require './workQueueBroker'
 
-describe 'WorkQueueBroker', () ->
+describe 'WorkQueueBroker', ->
   it 'must connect to redis-server', (done) ->
     myBroker = new WorkQueueBroker()
-    myBroker.connect () ->
+    myBroker.connect ->
       console.log 'work queue broker ready'
       myBroker.on 'error', (error) ->
         console.log '>>>' + error
@@ -34,33 +34,31 @@ describe 'WorkQueueBroker', () ->
     expect(typeof myWorkQueue1.subscribe).toEqual('function')
     myWorkQueue2 = myBroker.createQueue 'work-queue-2'
     expect(typeof myWorkQueue2.subscribe).toEqual('function')
-    clearCnt = 0
-    myWorkQueue1.clear () ->
+    queuesToClear = 2
+    myWorkQueue1.clear ->
       console.log 'Cleared "work-queue-1"'
-      done() if ++clearCnt >= 2
-    myWorkQueue2.clear () ->
+      done() unless --queuesToClear
+    myWorkQueue2.clear ->
       console.log 'Cleared "work-queue-2"'
-      done() if ++clearCnt >= 2
+      done() unless --queuesToClear
 
   it 'receives all published data from given queues', (done) ->
     queueDoneCnt = 0
     console.log 'subscribing to queue "test-queue-1"'
-    myWorkQueue1.subscribe (payload) ->
+    myWorkQueue1.subscribe (payload, ack) ->
       console.log 'received message "' + payload + '" in queue "test-queue-1"'
       expect(payload).toEqual expectedItemsQ1[itemCntQ1++]
       if itemCntQ1 >= expectedItemsQ1.length
         done() if ++queueDoneCnt >= 2
-        return false
-      return true
+      ack()
 
     console.log 'subscribing to queue "test-queue-2"'
-    myWorkQueue2.subscribe (payload) ->
+    myWorkQueue2.subscribe (payload, ack) ->
       console.log 'received message "' + payload + '" in queue "test-queue-2"'
       expect(payload).toEqual expectedItemsQ2[itemCntQ2++]
       if itemCntQ2 >= expectedItemsQ2.length
         done() if ++queueDoneCnt >= 2
-        return false
-      return true
+      ack()
 
     for item in expectedItemsQ1
       console.log 'publishing "' + item + '" to queue "test-queue-1"'
@@ -70,9 +68,7 @@ describe 'WorkQueueBroker', () ->
       console.log 'publishing "' + item + '" to queue "test-queue-2"'
       myWorkQueue2.publish item
 
-    myBroker.begin()
-
-  it 'quits Redis cleanly', () ->
+  it 'quits Redis cleanly', ->
     console.log 'Ending work queue broker'
     expect(myBroker.end()).toEqual true
 

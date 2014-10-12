@@ -1,6 +1,6 @@
 'use strict';
 
-var RedisQueue, clearInitially, enqueueURLs, initEventHandlers, main, myQueue, providerId, resultCnt, resultQueueName, resultQueueTimeout, stopWorker, urlQueueName, urls;
+var RedisQueue, clearInitially, enqueueURLs, initEventHandlers, main, myQueue, providerId, resultQueueName, resultQueueTimeout, resultsExpected, stopWorker, urlQueueName, urls;
 
 RedisQueue = require('../../../node-redis-queue');
 
@@ -23,7 +23,7 @@ stopWorker = process.argv[2] === 'stop';
 
 urls = ['http://www.google.com', 'http://www.yahoo.com', 'http://ourfamilystory.com', 'http://ourfamilystory.com/pnuke'];
 
-resultCnt = 0;
+resultsExpected = 0;
 
 myQueue = new RedisQueue;
 
@@ -44,7 +44,7 @@ initEventHandlers = function() {
   });
   return myQueue.on('message', function(queueName, result) {
     console.log('result = ', result);
-    if (++resultCnt >= urls.length) {
+    if (!--resultsExpected) {
       return myQueue.disconnect();
     }
   });
@@ -54,7 +54,10 @@ main = function() {
   if (clearInitially) {
     return myQueue.clear(urlQueueName, function() {
       console.log('Cleared "' + urlQueueName + '"');
-      return enqueueURLs();
+      return myQueue.clear(resultQueueName, function() {
+        console.log('Cleared "' + resultQueueName + '"');
+        return myQueue.disconnect();
+      });
     });
   } else {
     if (!stopWorker) {
@@ -76,6 +79,7 @@ enqueueURLs = function() {
       url: url,
       q: resultQueueName
     });
+    ++resultsExpected;
   }
   myQueue.monitor(resultQueueTimeout, resultQueueName);
   return console.log('waiting for responses from worker...');

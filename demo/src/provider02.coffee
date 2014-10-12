@@ -30,7 +30,7 @@ urls = [
   'http://ourfamilystory.com',
   'http://ourfamilystory.com/pnuke'
 ]
-resultCnt = 0
+resultsExpected = 0
 
 myQueue = new RedisQueue
 myQueue.connect ->
@@ -39,7 +39,7 @@ myQueue.connect ->
   main()
 
 initEventHandlers = ->
-  myQueue.on 'end', () ->
+  myQueue.on 'end', ->
     console.log 'provider01 finished'
     process.exit()
 
@@ -49,13 +49,15 @@ initEventHandlers = ->
 
   myQueue.on 'message', (queueName, result) ->
     console.log 'result = ', result
-    myQueue.disconnect() if ++resultCnt >= urls.length
+    myQueue.disconnect() unless --resultsExpected
 
 main = ->
   if clearInitially
-    myQueue.clear urlQueueName, () ->
+    myQueue.clear urlQueueName, ->
       console.log 'Cleared "' + urlQueueName + '"'
-      enqueueURLs()
+      myQueue.clear resultQueueName, ->
+        console.log 'Cleared "' + resultQueueName + '"'
+        myQueue.disconnect()
   else
     unless stopWorker
       enqueueURLs()
@@ -64,10 +66,11 @@ main = ->
       myQueue.push urlQueueName, '***stop***'
       myQueue.disconnect()
 
-enqueueURLs = () ->
+enqueueURLs = ->
   for url in urls
     console.log 'Pushing "' + url + '"'
     myQueue.push urlQueueName, {url: url, q: resultQueueName}
+    ++resultsExpected
   myQueue.monitor resultQueueTimeout, resultQueueName
   console.log 'waiting for responses from worker...'
 

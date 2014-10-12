@@ -8,15 +8,20 @@ class WorkQueue
     return this
 
   subscribe: (@onJob) ->
+    process.nextTick =>
+      @qmgr.pop @queueName
     return this
 
   publish: (payload) ->
     @qmgr.push @queueName, payload
     return this
 
-  unsubscribe: () ->
+  unsubscribe: ->
     @onJob = null
     return this
+
+  begin: ->
+    @qmgr.pop @queueName
 
   clear: (onClearComplete) ->
     @qmgr.clear @queueName, onClearComplete
@@ -25,7 +30,7 @@ class WorkQueue
 class WorkQueueBrokerError extends Error
 
 class WorkQueueBroker extends events.EventEmitter
-  constructor: () ->
+  constructor: ->
     @queues = {}
     @qmgr = new RedisQueue()
     return this
@@ -40,18 +45,17 @@ class WorkQueueBroker extends events.EventEmitter
     @initEmitters_()
 
   initEmitters_: ->
-    @qmgr.on 'ready', () =>
+    @qmgr.on 'ready', =>
       @emit 'ready'
     @qmgr.on 'error', (err) =>
       @emit 'error', err
-    @qmgr.on 'timeout', () =>
+    @qmgr.on 'timeout', =>
       @emit 'timeout'
-    @qmgr.on 'end', () =>
+    @qmgr.on 'end', =>
       @emit 'end'
     @qmgr.on 'message', (queueName, payload) =>
       if @isValidQueueName(queueName) and @queues[queueName].onJob
-        if @queues[queueName].onJob payload
-          @qmgr.pop queueName
+        @queues[queueName].onJob payload, @qmgr.pop.bind @qmgr, queueName
     
   createQueue: (queueName, options) ->
     return @queues[queueName] = new WorkQueue @qmgr, queueName, options
@@ -63,12 +67,8 @@ class WorkQueueBroker extends events.EventEmitter
 
   subscribe: (queueName, onJob) ->
     if @isValidQueueName queueName
-      @queues[queueName].onJob = onJob
+      @queues[queueName].subscribe onJob
     return this
-
-  begin: ->
-    for queueName in Object.keys @queues
-      @qmgr.pop queueName
 
   unsubscribe: (queueName) ->
     if @isValidQueueName queueName
@@ -80,11 +80,11 @@ class WorkQueueBroker extends events.EventEmitter
       delete @queues[queueName]
     return this
 
-  disconnect: () ->
+  disconnect: ->
     @qmgr.disconnect()
     return true
 
-  end: () ->
+  end: ->
     @qmgr.end()
     return true
 
