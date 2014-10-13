@@ -58,7 +58,7 @@ class WorkQueueBroker extends events.EventEmitter
 
   publish: (queueName, payload) ->
     if @isValidQueueName
-      @qmgr[queueName].publish payload
+      @queues[queueName].publish payload
     return this
 
   subscribe: (queueName, onJob) ->
@@ -85,9 +85,8 @@ class WorkQueueBroker extends events.EventEmitter
     return true
 
   isValidQueueName: (queueName) ->
-    unless @queues[queueName]
-      throw new WorkQueueBrokerError('Unknown queue "' + queueName + '"')
-    return true
+    return true if @queues[queueName]
+    throw new WorkQueueBrokerError('Unknown queue "' + queueName + '"')
 
 module.exports = WorkQueueBroker
 
