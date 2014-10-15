@@ -1,6 +1,27 @@
 'use strict';
 
-var QueueMgr, SHA1, checkArgs, initEventHandlers, monitorTimeout, onData, qmgr, request, shutDown, urlQueueName, verbose;
+/*
+QueueMgr Example -- woker02
+
+This app waits for work requests to become available in the 'urlq' queue.
+Then, for each one it receives, the app get the page for the URL, computes an
+SHA1 value on the request URL (req.url) and outputs that and the request URL
+value (req.url) to the result queue (req.q) specified in the work request.
+However, if it receives a '***stop***' message, it closes the connection
+and quits immediately.
+
+Usage:
+  cd demo/lib
+  export NODE_PATH='../../..'
+  node worker02.js
+ or
+  node worker02.js mem verbose
+
+Use this app in conjunction with provider02.js. See the provider02 source code
+for more details.
+*/
+
+var QueueMgr, SHA1, checkArgs, initEventHandlers, onData, qmgr, request, shutDown, urlQueueName, verbose;
 
 QueueMgr = require('node-redis-queue').QueueMgr;
 
@@ -9,8 +30,6 @@ request = require('request');
 SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1;
 
 urlQueueName = 'urlq';
-
-monitorTimeout = 1;
 
 verbose = process.argv[3] === 'verbose';
 

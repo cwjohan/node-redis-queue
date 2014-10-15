@@ -1,19 +1,23 @@
 'use strict'
-# This app waits for URLs to become available in the 'urlq' queue. Then, for each
-# one it receives, the app gets the page for the URL, computes an SHA1 value,
-# and outputs it to the console log.
-# However, if it receives a '***stop***' message, it closes the connection and
-# quits immediately.
-#
-# Usage:
-#   cd demo/lib
-#   export NODE_PATH='../../..'
-#   node worker01.js
-#   or
-#   node worker01.js mem verbose
-#
-#   Use this app in conjunction with provider01.js. See the provider01 source code
-#   for more details.
+###
+QueueMgr Example -- worker01
+
+This app waits for URLs to become available in the 'urlq' queue, as provided
+by worker01. Then, for each one it receives, the app gets the page for the URL,
+computes an SHA1 value, and outputs it to the console log.
+However, if it receives a '***stop***' message, it closes the connection and
+quits immediately.
+
+Usage:
+  cd demo/lib
+  export NODE_PATH='../../..'
+  node worker01.js
+or
+  node worker01.js mem verbose
+
+Use this app in conjunction with provider01.js. See the provider01 source code
+for more details.
+###
 QueueMgr = require('node-redis-queue').QueueMgr
 request = require 'request'
 SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1

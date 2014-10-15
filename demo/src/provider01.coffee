@@ -1,17 +1,21 @@
 'use strict'
-# For each URL in the urls list, this app pushes it into the 'urlq' queue.
-# When done with that, it quits.
-#
-# Usage:
-#   cd demo/lib
-#   export NODE_PATH='../../..'
-#   node provider01.js clear
-#   node provider01.js
-#   ...
-#   node provider01.js stop
-#
-#   Use this app in conjunction with worker01.js. See the worker01 source code
-#   for more details.
+###
+QueueMgr Example -- provider01
+
+For each URL in the urls list, this app pushes it into the 'urlq' queue
+for consumption by worker01. When done with that, it quits.
+
+Usage:
+  cd demo/lib
+  export NODE_PATH='../../..'
+  node provider01.js clear
+  node provider01.js
+  ...
+  node provider01.js stop
+
+Use this app in conjunction with worker01.js. See the worker01 source code
+for more details.
+###
 QueueMgr = require('node-redis-queue').QueueMgr
 urlQueueName = 'urlq'
 qmgr = null

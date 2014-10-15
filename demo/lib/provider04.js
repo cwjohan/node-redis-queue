@@ -1,5 +1,34 @@
 'use strict';
 
+/*
+WorkQueueBroker Example -- provider04
+
+For each URL in the urls list, this app puts a work request in 'urlq' queue to be
+consumed by worker04. It then waits for the results to be returned in 'urlshaq01'
+or whatever result queue, depending on the providerId parameter.
+
+Usage:
+    cd demo/lib
+    export NODE_PATH='../../..'
+    node provider04.js <providerId> [clear]
+  or
+    node provider04.js stop
+
+  where <providerId> is something to make this provider instance unique,
+  such as "01", "02", "foo", "bar", or whatever.
+
+Example usage:
+  cd demo/lib
+  export NODE_PATH='../../..'
+  node provider04.js 01 clear
+  node provider04.js
+  node provider04.js
+  node provider04.js stop
+
+Use this app in conjunction with worker02.js. See the worker02 source code
+for more details.
+*/
+
 var WorkQueueBroker, clearInitially, clearQueues, consumeResultQueue, createWorkQueues, initEventHandlers, myBroker, providerId, resultQueue, resultQueueName, resultQueueTimeout, resultsExpected, sendURLs, stopOneWorker, stopWorker, urlQueue, urlQueueName, urls;
 
 WorkQueueBroker = require('node-redis-queue').WorkQueueBroker;

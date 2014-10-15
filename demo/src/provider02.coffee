@@ -1,20 +1,32 @@
 'use strict'
-# For each URL in the urls list, this app puts a work request in 'urlq' queue
-# and waits for the results to be returned in 'urlshaq01' or whatever,
-# depending on the providerId parameter.
-#
-# Usage:
-#     cd demo/lib
-#     export NODE_PATH='../../..'
-#     node provider02.js <providerId> [clear]
-#   or
-#     node provider02.js stop
-#
-#   where <providerId> is something to make this provider instance unique,
-#   such as "01", "02", "foo", "bar", or whatever.
-#
-#   Use this app in conjunction with worker02.js. See the worker02 source code
-#   for more details.
+###
+QueueMgr Example -- provider02
+
+For each URL in the urls list, this app puts a work request in 'urlq' queue
+consumed by worker02 and waits for the results to be returned in 'urlshaq01'
+or whatever, depending on the providerId parameter.
+
+Usage:
+   cd demo/lib
+   export NODE_PATH='../../..'
+   node provider02.js <providerId> [clear]
+ or
+   node provider02.js stop
+
+ where <providerId> is something to make this provider instance unique,
+ such as "01", "02", "foo", "bar", or whatever.
+
+Example usage:
+  cd demo/lib
+  export NODE_PATH='../../..'
+  node provider02.js 01 clear
+  node provider02.js
+  node provider02.js
+  node provider02.js stop
+
+Use this app in conjunction with worker02.js. See the worker02 source code
+for more details.
+###
 QueueMgr = require('node-redis-queue').QueueMgr
 urlQueueName = 'urlq'
 providerId = process.argv[2]
@@ -22,7 +34,6 @@ unless providerId
   console.log 'Missing provider id argument'
   process.exit()
 resultQueueName = 'urlshaq' + providerId
-resultQueueTimeout = 1
 clearInitially = process.argv[3] is 'clear'
 stopWorker = process.argv[2] is 'stop'
 urls = [

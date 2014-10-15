@@ -1,5 +1,21 @@
 'use strict';
 
+/*
+WorkQueueBroker Example -- worker03
+
+This program consumes two work queues: 'work-queue-1' and 'work-queue-2'.
+It simply prints each message consumed and then "acks" it, so that the
+next message will become available. Each work queue operates independently.
+
+Usage:
+  cd demo/lib
+  export NODE_PATH='../../..'
+  node worker03.js
+
+Use this program in conjunction with provider03. See provider03 source code
+for more details.
+*/
+
 var WorkQueueBroker, consumeData, createWorkQueues, initEventHandlers, myBroker, myWorkQueue1, myWorkQueue2, queuesActive, shutDown;
 
 myWorkQueue1 = null;

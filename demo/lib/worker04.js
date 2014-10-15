@@ -1,5 +1,28 @@
 'use strict';
 
+/*
+WorkQueueBroker Example -- worker04
+
+This app consumes work requests that become available in the 'urlq' queue,
+as provided by provider04. For each one it receives, this app computes an
+SHA1 value on the request URL (req.url) and outputs that and the request
+URL value (req.url) to the result queue (req.q) specified in the work request.
+provider04 consumes the data in the result queue.
+
+However, if this app receives a '***stop***' message, it closes the connection
+and quits immediately.
+
+Usage:
+   cd demo/lib
+   export NODE_PATH='../../..'
+   node worker04.js
+ or
+   node worker04.js mem verbose
+
+Use this app in conjunction with provider04.js. See the provider04 source code
+for more details.
+*/
+
 var SHA1, WorkQueueBroker, checkArgs, consumeUrlQueue, createUrlQueue, initEventHandlers, myBroker, request, shutDown, urlQueue, urlQueueName, verbose;
 
 WorkQueueBroker = require('node-redis-queue').WorkQueueBroker;

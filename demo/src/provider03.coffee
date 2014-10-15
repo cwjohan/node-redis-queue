@@ -1,4 +1,22 @@
 'use strict'
+###
+WorkQueueBroker Example -- provider03
+
+For each string in the two expectedItems lists, this app sends it
+into either 'work-queue-1' or 'work-queue-2' for consumption by worker03.
+When done with that, it quits.
+
+Usage:
+  cd demo/lib
+  export NODE_PATH='../../..'
+  node provider01.js clear
+  node provider01.js
+  ...
+  node provider01.js stop
+
+Use this app in conjunction with worker03.js. See the worker03 source code
+for more details.
+###
 myWorkQueue1 = null
 myWorkQueue2 = null
 myBroker = null

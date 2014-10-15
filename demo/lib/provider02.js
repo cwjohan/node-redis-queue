@@ -1,6 +1,35 @@
 'use strict';
 
-var QueueMgr, clearInitially, enqueueURLs, initEventHandlers, main, onData, providerId, qmgr, resultQueueName, resultQueueTimeout, resultsExpected, shutDown, stopWorker, urlQueueName, urls;
+/*
+QueueMgr Example -- provider02
+
+For each URL in the urls list, this app puts a work request in 'urlq' queue
+consumed by worker02 and waits for the results to be returned in 'urlshaq01'
+or whatever, depending on the providerId parameter.
+
+Usage:
+   cd demo/lib
+   export NODE_PATH='../../..'
+   node provider02.js <providerId> [clear]
+ or
+   node provider02.js stop
+
+ where <providerId> is something to make this provider instance unique,
+ such as "01", "02", "foo", "bar", or whatever.
+
+Example usage:
+  cd demo/lib
+  export NODE_PATH='../../..'
+  node provider02.js 01 clear
+  node provider02.js
+  node provider02.js
+  node provider02.js stop
+
+Use this app in conjunction with worker02.js. See the worker02 source code
+for more details.
+*/
+
+var QueueMgr, clearInitially, enqueueURLs, initEventHandlers, main, onData, providerId, qmgr, resultQueueName, resultsExpected, shutDown, stopWorker, urlQueueName, urls;
 
 QueueMgr = require('node-redis-queue').QueueMgr;
 
@@ -14,8 +43,6 @@ if (!providerId) {
 }
 
 resultQueueName = 'urlshaq' + providerId;
-
-resultQueueTimeout = 1;
 
 clearInitially = process.argv[3] === 'clear';
 
