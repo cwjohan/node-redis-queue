@@ -1,8 +1,10 @@
 'use strict'
-# For each URL in the urls list, this app puts it into the 'urlq' queue.
+# For each URL in the urls list, this app pushes it into the 'urlq' queue.
+# When done with that, it quits.
 #
 # Usage:
 #   cd demo/lib
+#   export NODE_PATH='../../..'
 #   node provider01.js clear
 #   node provider01.js
 #   ...
@@ -10,9 +12,9 @@
 #
 #   Use this app in conjunction with worker01.js. See the worker01 source code
 #   for more details.
-RedisQueue = require '../../../node-redis-queue'
+QueueMgr = require('node-redis-queue').QueueMgr
 urlQueueName = 'urlq'
-myQueue = null
+qmgr = null
 clearInitially = process.argv[2] is 'clear'
 stopWorker = process.argv[2] is 'stop'
 urls = [
@@ -22,38 +24,36 @@ urls = [
   'http://ourfamilystory.com/pnuke'
 ]
 
-myQueue = new RedisQueue
-myQueue.connect ->
+qmgr = new QueueMgr
+qmgr.connect ->
   console.log 'connected'
   initEventHandlers()
   main()
 
 initEventHandlers = ->
-  myQueue.on 'end', () ->
+  qmgr.on 'end', () ->
     console.log 'provider01 finished'
     process.exit()
-
-  myQueue.on 'error', (error) ->
+  .on 'error', (error) ->
     console.log 'provider01 stopping due to: ' + error
     process.exit()
 
 main = ->
   if clearInitially
-    myQueue.clear urlQueueName, () ->
+    qmgr.clear urlQueueName, () ->
       console.log 'Cleared "' + urlQueueName + '"'
       enqueueURLs()
-      myQueue.disconnect()
+      qmgr.disconnect()
   else
     unless stopWorker
       enqueueURLs()
     else
       console.log 'Stopping worker'
-      myQueue.push urlQueueName, '***stop***'
-    myQueue.disconnect()
+      qmgr.push urlQueueName, '***stop***'
+    qmgr.disconnect()
 
 enqueueURLs = ->
   for url in urls
     console.log 'Pushing "' + url + '" to queue "' + urlQueueName + '"'
-    myQueue.push urlQueueName, url
+    qmgr.push urlQueueName, url
   return
-

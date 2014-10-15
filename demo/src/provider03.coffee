@@ -18,7 +18,7 @@ itemCntQ2 = 0
 clear = process.argv[2] is 'clear'
 stop = process.argv[2] is 'stop'
 
-WorkQueueBroker = require '../../lib/workQueueBroker'
+WorkQueueBroker = require('node-redis-queue').WorkQueueBroker
 
 myBroker = new WorkQueueBroker()
 myBroker.connect () ->
@@ -26,52 +26,52 @@ myBroker.connect () ->
   initEventHandlers()
   createWorkQueues()
   if stop
-    postStop()
-    end()
+    sendStop()
+    shutDown()
   if clear
     clearWorkQueues ->
-      postData()
-      end()
+      sendData()
+      shutDown()
   else
-    postData()
-    end()
+    sendData()
+    shutDown()
 
 initEventHandlers = ->
   myBroker.on 'error', (error) ->
     console.log '>>>' + error
-    process.exit()
+    shutDown()
   myBroker.on 'end', ->
     console.log '>>>End Redis connection'
+    shutDown()
 
 createWorkQueues = ->
   myWorkQueue1 = myBroker.createQueue 'work-queue-1'
   myWorkQueue2 = myBroker.createQueue 'work-queue-2'
 
 clearWorkQueues = (done) ->
-  clearCnt = 0
+  queuesToClear = 2
   myWorkQueue1.clear () ->
     console.log 'Cleared "work-queue-1"'
-    done() if ++clearCnt >= 2
+    done() unless --queuesToClear
   myWorkQueue2.clear () ->
     console.log 'Cleared "work-queue-2"'
-    done() if ++clearCnt >= 2
+    done() unless --queuesToClear
 
-postData = ->
+sendData = ->
   for item in expectedItemsQ1
     console.log 'publishing "' + item + '" to queue "work-queue-1"'
-    myWorkQueue1.publish item
+    myWorkQueue1.send item
 
   for item in expectedItemsQ2
     console.log 'publishing "' + item + '" to queue "work-queue-2"'
-    myWorkQueue2.publish item
+    myWorkQueue2.send item
 
-postStop = ->
+sendStop = ->
   console.log 'stopping worker03'
-  myWorkQueue1.publish '***stop***'
-  myWorkQueue2.publish '***stop***'
+  myWorkQueue1.send '***stop***'
+  myWorkQueue2.send '***stop***'
 
-end = ->
-  console.log 'Ending work queue broker'
+shutDown = ->
   myBroker.end()
-
+  process.exit()
 

@@ -1,8 +1,8 @@
 'use strict';
 
-var WorkQueueBroker, clearInitially, clearQueues, createWorkQueues, initEventHandlers, myBroker, providerId, publishURLs, resultQueue, resultQueueName, resultQueueTimeout, resultsExpected, stopOneWorker, stopWorker, subscribeToUrlQueue, urlQueue, urlQueueName, urls;
+var WorkQueueBroker, clearInitially, clearQueues, consumeResultQueue, createWorkQueues, initEventHandlers, myBroker, providerId, resultQueue, resultQueueName, resultQueueTimeout, resultsExpected, sendURLs, stopOneWorker, stopWorker, urlQueue, urlQueueName, urls;
 
-WorkQueueBroker = require('../../lib/workQueueBroker');
+WorkQueueBroker = require('node-redis-queue').WorkQueueBroker;
 
 urlQueueName = 'urlq';
 
@@ -40,14 +40,14 @@ myBroker.connect(function() {
   } else if (clearInitially) {
     return clearQueues();
   } else {
-    subscribeToUrlQueue();
-    return publishURLs();
+    sendURLs();
+    return consumeResultQueue();
   }
 });
 
 initEventHandlers = function() {
   myBroker.on('end', function() {
-    console.log('provider01 finished');
+    console.log('provider04 finished');
     return process.exit();
   });
   return myBroker.on('error', function(error) {
@@ -61,16 +61,6 @@ createWorkQueues = function() {
   return resultQueue = myBroker.createQueue(resultQueueName);
 };
 
-subscribeToUrlQueue = function() {
-  return resultQueue.subscribe(function(result, ack) {
-    console.log('result = ', result);
-    ack();
-    if (!--resultsExpected) {
-      return myBroker.end();
-    }
-  });
-};
-
 clearQueues = function() {
   return urlQueue.clear(function() {
     console.log('cleared "' + urlQueueName + '"');
@@ -81,13 +71,13 @@ clearQueues = function() {
   });
 };
 
-publishURLs = function() {
+sendURLs = function() {
   var url, _i, _len;
   if (!stopWorker) {
     for (_i = 0, _len = urls.length; _i < _len; _i++) {
       url = urls[_i];
       console.log('Publishing "' + url + '"');
-      urlQueue.publish({
+      urlQueue.send({
         url: url,
         q: resultQueueName
       });
@@ -97,8 +87,18 @@ publishURLs = function() {
   }
 };
 
+consumeResultQueue = function() {
+  return resultQueue.consume(function(result, ack) {
+    console.log('result = ', result);
+    ack();
+    if (!--resultsExpected) {
+      return myBroker.end();
+    }
+  });
+};
+
 stopOneWorker = function() {
   console.log('Stopping worker');
-  urlQueue.publish('***stop***');
+  urlQueue.send('***stop***');
   return myBroker.disconnect();
 };

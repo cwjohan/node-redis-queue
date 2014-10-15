@@ -5,6 +5,7 @@
 #
 # Usage:
 #     cd demo/lib
+#     export NODE_PATH='../../..'
 #     node provider02.js <providerId> [clear]
 #   or
 #     node provider02.js stop
@@ -14,7 +15,7 @@
 #
 #   Use this app in conjunction with worker02.js. See the worker02 source code
 #   for more details.
-RedisQueue = require '../../../node-redis-queue'
+QueueMgr = require('node-redis-queue').QueueMgr
 urlQueueName = 'urlq'
 providerId = process.argv[2]
 unless providerId
@@ -32,45 +33,51 @@ urls = [
 ]
 resultsExpected = 0
 
-myQueue = new RedisQueue
-myQueue.connect ->
+qmgr = new QueueMgr
+qmgr.connect ->
   console.log 'connected'
   initEventHandlers()
   main()
 
 initEventHandlers = ->
-  myQueue.on 'end', ->
+  qmgr.on 'end', ->
     console.log 'provider01 finished'
-    process.exit()
+    shutDown()
 
-  myQueue.on 'error', (error) ->
+  qmgr.on 'error', (error) ->
     console.log 'provider01 stopping due to: ' + error
-    process.exit()
-
-  myQueue.on 'message', (queueName, result) ->
-    console.log 'result = ', result
-    myQueue.disconnect() unless --resultsExpected
+    shutDown()
 
 main = ->
   if clearInitially
-    myQueue.clear urlQueueName, ->
+    qmgr.clear urlQueueName, ->
       console.log 'Cleared "' + urlQueueName + '"'
-      myQueue.clear resultQueueName, ->
+      qmgr.clear resultQueueName, ->
         console.log 'Cleared "' + resultQueueName + '"'
-        myQueue.disconnect()
+        shutDown()
   else
     unless stopWorker
       enqueueURLs()
     else
       console.log 'Stopping worker'
-      myQueue.push urlQueueName, '***stop***'
-      myQueue.disconnect()
+      qmgr.push urlQueueName, '***stop***'
+      shutDown()
 
 enqueueURLs = ->
   for url in urls
     console.log 'Pushing "' + url + '"'
-    myQueue.push urlQueueName, {url: url, q: resultQueueName}
+    qmgr.push urlQueueName, {url: url, q: resultQueueName}
     ++resultsExpected
-  myQueue.monitor resultQueueTimeout, resultQueueName
+  qmgr.pop resultQueueName, onData
   console.log 'waiting for responses from worker...'
 
+onData = (result) ->
+  console.log 'result = ', result
+  if --resultsExpected
+    qmgr.pop resultQueueName, onData
+  else
+    shutDown()
+
+shutDown = ->
+  qmgr.end()
+  process.exit()

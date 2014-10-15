@@ -1,30 +1,32 @@
 'use strict'
 # This app waits for work requests to become available in the 'urlq' queue.
-# Then, for each one it receives, the app computes an SHA1 value on the request
-# URL (req.url) and outputs that and the request URL value (req.url) to the
-# result queue (req.q) specified in the work request. However, if it receives
-# a '***stop***' message, it closes the connection and quits immediately.
+# Then, for each one it receives, the app get the page for the URL, computes an
+# SHA1 value on the request URL (req.url) and outputs that and the request URL
+# value (req.url) to the result queue (req.q) specified in the work request.
+# However, if it receives a '***stop***' message, it closes the connection
+# and quits immediately.
 #
 ## Usage:
 #   cd demo/lib
+#   export NODE_PATH='../../..'
 #   node worker02.js
 #   or
 #   node worker02.js mem verbose
 #
 #   Use this app in conjunction with provider02.js. See the provider02 source code
 #   for more details.
-RedisQueue = require '../../../node-redis-queue'
+QueueMgr = require('node-redis-queue').QueueMgr
 request = require 'request'
 SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1
 urlQueueName = 'urlq'
 monitorTimeout = 1
 verbose = process.argv[3] is 'verbose'
 
-myQueue = new RedisQueue
-myQueue.connect ->
+qmgr = new QueueMgr
+qmgr.connect ->
   checkArgs()
   initEventHandlers()
-  myQueue.monitor monitorTimeout, urlQueueName
+  qmgr.pop urlQueueName, onData
   console.log 'waiting for work...'
 
 checkArgs = ->
@@ -36,32 +38,35 @@ checkArgs = ->
       console.log '>>>LEAK = ', d
 
 initEventHandlers = ->
-  myQueue.on 'end', () ->
+  qmgr.on 'end', () ->
     console.log 'worker01 detected Redis connection ended'
-    process.exit()
+    shutDown()
 
-  myQueue.on 'error', (error) ->
+  qmgr.on 'error', (error) ->
     console.log 'worker01 stopping due to: ' + error
-    process.exit()
+    shutDown()
 
-  myQueue.on 'timeout', ->
-    console.log 'worker01 timeout' if verbose
+onData = (req) ->
+  if typeof req is 'object'
+    console.log 'worker01 processing request ', req
+    request req.url, (error, response, body) ->
+      if not error and response.statusCode is 200
+        sha1 = SHA1 body
+        console.log req.url + ' SHA1 = ' + sha1
+        qmgr.push req.q, {url: req.url, sha1: sha1}
+      else
+        console.log error
+        qmgr.push req.q, {url: req.url, err: error, code: response.statusCode}
+      qmgr.pop urlQueueName, onData
+  else
+    if typeof req is 'string' and req is '***stop***'
+      console.log 'worker02 stopping'
+      shutDown()
+    console.log 'Unexpected message: ', req
+    console.log 'Type of message = ' + typeof req
+    shutDown()
 
-  myQueue.on 'message', (queueName, req) ->
-    if typeof req is 'object'
-      console.log 'worker01 processing request ', req
-      request req.url, (error, response, body) ->
-        if not error and response.statusCode is 200
-          sha1 = SHA1 body
-          console.log req.url + ' SHA1 = ' + sha1
-          myQueue.push req.q, {url: req.url, sha1: sha1}
-        else
-          console.log error
-          myQueue.push req.q, {url: req.url, err: error, code: response.statusCode}
-    else
-      if typeof req is 'string' and req is '***stop***'
-        console.log 'worker01 stopping'
-        process.exit()
-      console.log 'Unexpected message: ', req
-      console.log 'Type of message = ' + typeof req
+shutDown = ->
+  qmgr.end()
+  process.exit()
 

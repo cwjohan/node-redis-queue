@@ -1,8 +1,8 @@
 'use strict';
 
-var SHA1, WorkQueueBroker, checkArgs, createUrlQueue, initEventHandlers, myBroker, request, subscribeToUrlQueue, urlQueue, urlQueueName, verbose;
+var SHA1, WorkQueueBroker, checkArgs, consumeUrlQueue, createUrlQueue, initEventHandlers, myBroker, request, shutDown, urlQueue, urlQueueName, verbose;
 
-WorkQueueBroker = require('../../lib/workQueueBroker');
+WorkQueueBroker = require('node-redis-queue').WorkQueueBroker;
 
 request = require('request');
 
@@ -20,7 +20,7 @@ myBroker.connect(function() {
   checkArgs();
   initEventHandlers();
   createUrlQueue();
-  subscribeToUrlQueue();
+  consumeUrlQueue();
   return console.log('waiting for work...');
 });
 
@@ -39,12 +39,12 @@ checkArgs = function() {
 
 initEventHandlers = function() {
   myBroker.on('end', function() {
-    console.log('worker01 detected Redis connection ended');
-    return process.exit();
+    console.log('worker04 detected Redis connection ended');
+    return shutDown();
   });
   return myBroker.on('error', function(error) {
-    console.log('worker01 stopping due to: ' + error);
-    return process.exit();
+    console.log('worker04 stopping due to: ' + error);
+    return shutDown();
   });
 };
 
@@ -52,15 +52,15 @@ createUrlQueue = function() {
   return urlQueue = myBroker.createQueue(urlQueueName);
 };
 
-subscribeToUrlQueue = function() {
-  return urlQueue.subscribe(function(req, ack) {
+consumeUrlQueue = function() {
+  return urlQueue.consume(function(req, ack) {
     if (typeof req === 'object') {
-      console.log('worker01 processing request ', req);
+      console.log('worker04 processing request ', req);
       return request(req.url, function(error, response, body) {
         var sha1;
         if (!error && response.statusCode === 200) {
           sha1 = SHA1(body);
-          console.log('publishing ' + req.url + ' SHA1 = ' + sha1);
+          console.log('sending ' + req.url + ' SHA1 = ' + sha1);
           myBroker.qmgr.push(req.q, {
             url: req.url,
             sha1: sha1
@@ -73,17 +73,22 @@ subscribeToUrlQueue = function() {
             err: error,
             code: response.statusCode
           });
-          return process.exit();
+          return shutDown();
         }
       });
     } else {
       if (typeof req === 'string' && req === '***stop***') {
         console.log('worker04 stopping');
-        process.exit();
+        shutDown();
       }
       console.log('Unexpected message: ', req);
       console.log('Type of message = ' + typeof req);
       return ack();
     }
   });
+};
+
+shutDown = function() {
+  myBroker.end();
+  return process.exit();
 };

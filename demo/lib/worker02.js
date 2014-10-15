@@ -1,8 +1,8 @@
 'use strict';
 
-var RedisQueue, SHA1, checkArgs, initEventHandlers, monitorTimeout, myQueue, request, urlQueueName, verbose;
+var QueueMgr, SHA1, checkArgs, initEventHandlers, monitorTimeout, onData, qmgr, request, shutDown, urlQueueName, verbose;
 
-RedisQueue = require('../../../node-redis-queue');
+QueueMgr = require('node-redis-queue').QueueMgr;
 
 request = require('request');
 
@@ -14,12 +14,12 @@ monitorTimeout = 1;
 
 verbose = process.argv[3] === 'verbose';
 
-myQueue = new RedisQueue;
+qmgr = new QueueMgr;
 
-myQueue.connect(function() {
+qmgr.connect(function() {
   checkArgs();
   initEventHandlers();
-  myQueue.monitor(monitorTimeout, urlQueueName);
+  qmgr.pop(urlQueueName, onData);
   return console.log('waiting for work...');
 });
 
@@ -37,47 +37,50 @@ checkArgs = function() {
 };
 
 initEventHandlers = function() {
-  myQueue.on('end', function() {
+  qmgr.on('end', function() {
     console.log('worker01 detected Redis connection ended');
-    return process.exit();
+    return shutDown();
   });
-  myQueue.on('error', function(error) {
+  return qmgr.on('error', function(error) {
     console.log('worker01 stopping due to: ' + error);
-    return process.exit();
+    return shutDown();
   });
-  myQueue.on('timeout', function() {
-    if (verbose) {
-      return console.log('worker01 timeout');
-    }
-  });
-  return myQueue.on('message', function(queueName, req) {
-    if (typeof req === 'object') {
-      console.log('worker01 processing request ', req);
-      return request(req.url, function(error, response, body) {
-        var sha1;
-        if (!error && response.statusCode === 200) {
-          sha1 = SHA1(body);
-          console.log(req.url + ' SHA1 = ' + sha1);
-          return myQueue.push(req.q, {
-            url: req.url,
-            sha1: sha1
-          });
-        } else {
-          console.log(error);
-          return myQueue.push(req.q, {
-            url: req.url,
-            err: error,
-            code: response.statusCode
-          });
-        }
-      });
-    } else {
-      if (typeof req === 'string' && req === '***stop***') {
-        console.log('worker01 stopping');
-        process.exit();
+};
+
+onData = function(req) {
+  if (typeof req === 'object') {
+    console.log('worker01 processing request ', req);
+    return request(req.url, function(error, response, body) {
+      var sha1;
+      if (!error && response.statusCode === 200) {
+        sha1 = SHA1(body);
+        console.log(req.url + ' SHA1 = ' + sha1);
+        qmgr.push(req.q, {
+          url: req.url,
+          sha1: sha1
+        });
+      } else {
+        console.log(error);
+        qmgr.push(req.q, {
+          url: req.url,
+          err: error,
+          code: response.statusCode
+        });
       }
-      console.log('Unexpected message: ', req);
-      return console.log('Type of message = ' + typeof req);
+      return qmgr.pop(urlQueueName, onData);
+    });
+  } else {
+    if (typeof req === 'string' && req === '***stop***') {
+      console.log('worker02 stopping');
+      shutDown();
     }
-  });
+    console.log('Unexpected message: ', req);
+    console.log('Type of message = ' + typeof req);
+    return shutDown();
+  }
+};
+
+shutDown = function() {
+  qmgr.end();
+  return process.exit();
 };

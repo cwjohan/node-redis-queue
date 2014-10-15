@@ -6,14 +6,15 @@
 # a '***stop***' message, it closes the connection and quits immediately.
 #
 ## Usage:
-#   cd demo/lib
-#   node worker02.js
+#     cd demo/lib
+#     export NODE_PATH='../../..'
+#     node worker02.js
 #   or
-#   node worker02.js mem verbose
+#     node worker02.js mem verbose
 #
-#   Use this app in conjunction with provider02.js. See the provider02 source code
+#   Use this app in conjunction with provider04.js. See the provider04 source code
 #   for more details.
-WorkQueueBroker = require '../../lib/workQueueBroker'
+WorkQueueBroker = require('node-redis-queue').WorkQueueBroker
 request = require 'request'
 SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1
 urlQueueName = 'urlq'
@@ -25,7 +26,7 @@ myBroker.connect ->
   checkArgs()
   initEventHandlers()
   createUrlQueue()
-  subscribeToUrlQueue()
+  consumeUrlQueue()
   console.log 'waiting for work...'
 
 checkArgs = ->
@@ -38,34 +39,38 @@ checkArgs = ->
 
 initEventHandlers = ->
   myBroker.on 'end', () ->
-    console.log 'worker01 detected Redis connection ended'
-    process.exit()
+    console.log 'worker04 detected Redis connection ended'
+    shutDown()
 
   myBroker.on 'error', (error) ->
-    console.log 'worker01 stopping due to: ' + error
-    process.exit()
+    console.log 'worker04 stopping due to: ' + error
+    shutDown()
 
 createUrlQueue = ->
   urlQueue = myBroker.createQueue urlQueueName
 
-subscribeToUrlQueue = ->
-  urlQueue.subscribe (req, ack) ->
+consumeUrlQueue = ->
+  urlQueue.consume (req, ack) ->
     if typeof req is 'object'
-      console.log 'worker01 processing request ', req
+      console.log 'worker04 processing request ', req
       request req.url, (error, response, body) ->
         if not error and response.statusCode is 200
           sha1 = SHA1 body
-          console.log 'publishing ' + req.url + ' SHA1 = ' + sha1
+          console.log 'sending ' + req.url + ' SHA1 = ' + sha1
           myBroker.qmgr.push req.q, {url: req.url, sha1: sha1}
           ack()
         else
           console.log '>>>error: ', error
           myBroker.qmgr.push req.q, {url: req.url, err: error, code: response.statusCode}
-          process.exit()
+          shutDown()
     else
       if typeof req is 'string' and req is '***stop***'
         console.log 'worker04 stopping'
-        process.exit()
+        shutDown()
       console.log 'Unexpected message: ', req
       console.log 'Type of message = ' + typeof req
       ack()
+
+shutDown = ->
+  myBroker.end()
+  process.exit()

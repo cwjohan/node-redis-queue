@@ -5,6 +5,7 @@
 #
 # Usage:
 #     cd demo/lib
+#     export NODE_PATH='../../..'
 #     node provider02.js <providerId> [clear]
 #   or
 #     node provider02.js stop
@@ -14,7 +15,7 @@
 #
 #   Use this app in conjunction with worker02.js. See the worker02 source code
 #   for more details.
-WorkQueueBroker = require '../../lib/workQueueBroker'
+WorkQueueBroker = require('node-redis-queue').WorkQueueBroker
 urlQueueName = 'urlq'
 urlQueue = null
 resultQueue = null
@@ -44,12 +45,12 @@ myBroker.connect ->
   else if clearInitially
     clearQueues()
   else
-    subscribeToUrlQueue()
-    publishURLs()
+    sendURLs()
+    consumeResultQueue()
 
 initEventHandlers = ->
   myBroker.on 'end', () ->
-    console.log 'provider01 finished'
+    console.log 'provider04 finished'
     process.exit()
 
   myBroker.on 'error', (error) ->
@@ -60,12 +61,6 @@ createWorkQueues = ->
   urlQueue = myBroker.createQueue urlQueueName
   resultQueue = myBroker.createQueue resultQueueName
 
-subscribeToUrlQueue = ->
-  resultQueue.subscribe (result, ack) ->
-    console.log 'result = ', result
-    ack()
-    myBroker.end() unless --resultsExpected
-
 clearQueues = ->
   urlQueue.clear ->
     console.log 'cleared "' + urlQueueName + '"'
@@ -73,16 +68,22 @@ clearQueues = ->
       console.log 'cleared "' + resultQueueName + '"'
       myBroker.disconnect()
 
-publishURLs = ->
+sendURLs = ->
   unless stopWorker
     for url in urls
       console.log 'Publishing "' + url + '"'
-      urlQueue.publish {url: url, q: resultQueueName}
+      urlQueue.send {url: url, q: resultQueueName}
       ++resultsExpected
     console.log 'waiting for results from worker...'
 
+consumeResultQueue = ->
+  resultQueue.consume (result, ack) ->
+    console.log 'result = ', result
+    ack()
+    myBroker.end() unless --resultsExpected
+
 stopOneWorker = ->
   console.log 'Stopping worker'
-  urlQueue.publish '***stop***'
+  urlQueue.send '***stop***'
   myBroker.disconnect()
 

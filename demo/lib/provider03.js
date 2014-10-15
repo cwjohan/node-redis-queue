@@ -1,6 +1,6 @@
 'use strict';
 
-var WorkQueueBroker, clear, clearWorkQueues, createWorkQueues, end, expectedItemsQ1, expectedItemsQ2, initEventHandlers, itemCntQ1, itemCntQ2, myBroker, myWorkQueue1, myWorkQueue2, postData, postStop, stop;
+var WorkQueueBroker, clear, clearWorkQueues, createWorkQueues, expectedItemsQ1, expectedItemsQ2, initEventHandlers, itemCntQ1, itemCntQ2, myBroker, myWorkQueue1, myWorkQueue2, sendData, sendStop, shutDown, stop;
 
 myWorkQueue1 = null;
 
@@ -20,7 +20,7 @@ clear = process.argv[2] === 'clear';
 
 stop = process.argv[2] === 'stop';
 
-WorkQueueBroker = require('../../lib/workQueueBroker');
+WorkQueueBroker = require('node-redis-queue').WorkQueueBroker;
 
 myBroker = new WorkQueueBroker();
 
@@ -29,27 +29,28 @@ myBroker.connect(function() {
   initEventHandlers();
   createWorkQueues();
   if (stop) {
-    postStop();
-    end();
+    sendStop();
+    shutDown();
   }
   if (clear) {
     return clearWorkQueues(function() {
-      postData();
-      return end();
+      sendData();
+      return shutDown();
     });
   } else {
-    postData();
-    return end();
+    sendData();
+    return shutDown();
   }
 });
 
 initEventHandlers = function() {
   myBroker.on('error', function(error) {
     console.log('>>>' + error);
-    return process.exit();
+    return shutDown();
   });
   return myBroker.on('end', function() {
-    return console.log('>>>End Redis connection');
+    console.log('>>>End Redis connection');
+    return shutDown();
   });
 };
 
@@ -59,45 +60,45 @@ createWorkQueues = function() {
 };
 
 clearWorkQueues = function(done) {
-  var clearCnt;
-  clearCnt = 0;
+  var queuesToClear;
+  queuesToClear = 2;
   myWorkQueue1.clear(function() {
     console.log('Cleared "work-queue-1"');
-    if (++clearCnt >= 2) {
+    if (!--queuesToClear) {
       return done();
     }
   });
   return myWorkQueue2.clear(function() {
     console.log('Cleared "work-queue-2"');
-    if (++clearCnt >= 2) {
+    if (!--queuesToClear) {
       return done();
     }
   });
 };
 
-postData = function() {
+sendData = function() {
   var item, _i, _j, _len, _len1, _results;
   for (_i = 0, _len = expectedItemsQ1.length; _i < _len; _i++) {
     item = expectedItemsQ1[_i];
     console.log('publishing "' + item + '" to queue "work-queue-1"');
-    myWorkQueue1.publish(item);
+    myWorkQueue1.send(item);
   }
   _results = [];
   for (_j = 0, _len1 = expectedItemsQ2.length; _j < _len1; _j++) {
     item = expectedItemsQ2[_j];
     console.log('publishing "' + item + '" to queue "work-queue-2"');
-    _results.push(myWorkQueue2.publish(item));
+    _results.push(myWorkQueue2.send(item));
   }
   return _results;
 };
 
-postStop = function() {
+sendStop = function() {
   console.log('stopping worker03');
-  myWorkQueue1.publish('***stop***');
-  return myWorkQueue2.publish('***stop***');
+  myWorkQueue1.send('***stop***');
+  return myWorkQueue2.send('***stop***');
 };
 
-end = function() {
-  console.log('Ending work queue broker');
-  return myBroker.end();
+shutDown = function() {
+  myBroker.end();
+  return process.exit();
 };

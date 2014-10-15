@@ -1,22 +1,24 @@
 'use strict'
 events = require 'events'
 
-RedisQueue = require './index'
+QueueMgr = require('..').QueueMgr
 
 class WorkQueue
   constructor: (@qmgr, @queueName, @options) ->
     return this
 
-  subscribe: (@onJob) ->
-    process.nextTick => @qmgr.pop @queueName
+  ack_: (onData, cancel) ->
+    unless cancel
+      @consume onData
     return this
 
-  publish: (payload) ->
-    @qmgr.push @queueName, payload
+  consume: (onData) ->
+    @qmgr.pop @queueName, (data) =>
+      onData data, @ack_.bind(this, onData)
     return this
 
-  unsubscribe: ->
-    @onJob = null
+  send: (data) ->
+    @qmgr.push @queueName, data
     return this
 
   clear: (onClearComplete) ->
@@ -28,7 +30,7 @@ class WorkQueueBrokerError extends Error
 class WorkQueueBroker extends events.EventEmitter
   constructor: ->
     @queues = {}
-    @qmgr = new RedisQueue()
+    @qmgr = new QueueMgr()
     return this
 
   connect: (onReady) ->
@@ -49,26 +51,18 @@ class WorkQueueBroker extends events.EventEmitter
       @emit 'timeout'
     @qmgr.on 'end', =>
       @emit 'end'
-    @qmgr.on 'message', (queueName, payload) =>
-      if @isValidQueueName(queueName) and @queues[queueName].onJob
-        @queues[queueName].onJob payload, @qmgr.pop.bind @qmgr, queueName
     
   createQueue: (queueName, options) ->
     return @queues[queueName] = new WorkQueue @qmgr, queueName, options
 
-  publish: (queueName, payload) ->
+  send: (queueName, data) ->
     if @isValidQueueName
-      @queues[queueName].publish payload
+      @queues[queueName].send data
     return this
 
-  subscribe: (queueName, onJob) ->
+  consume: (queueName, onData) ->
     if @isValidQueueName queueName
-      @queues[queueName].subscribe onJob
-    return this
-
-  unsubscribe: (queueName) ->
-    if @isValidQueueName queueName
-      @queues[queueName].onJob = null
+      @queues[queueName].consume onData
     return this
 
   destroyQueue: (queueName) ->
@@ -88,5 +82,6 @@ class WorkQueueBroker extends events.EventEmitter
     return true if @queues[queueName]
     throw new WorkQueueBrokerError('Unknown queue "' + queueName + '"')
 
-module.exports = WorkQueueBroker
+exports.queue = WorkQueue
+exports.broker = WorkQueueBroker
 

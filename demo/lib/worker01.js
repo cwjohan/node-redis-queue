@@ -1,8 +1,8 @@
 'use strict';
 
-var RedisQueue, SHA1, checkArgs, done, initEventHandlers, myQueue, request, urlQueueName, verbose;
+var QueueMgr, SHA1, checkArgs, initEventHandlers, onData, qmgr, request, shutDown, urlQueueName, verbose;
 
-RedisQueue = require('../../../node-redis-queue');
+QueueMgr = require('node-redis-queue').QueueMgr;
 
 request = require('request');
 
@@ -10,16 +10,16 @@ SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1;
 
 urlQueueName = 'urlq';
 
-myQueue = null;
+qmgr = null;
 
 verbose = process.argv[3] === 'verbose';
 
-myQueue = new RedisQueue;
+qmgr = new QueueMgr;
 
-myQueue.connect(function() {
+qmgr.connect(function() {
   checkArgs();
   initEventHandlers();
-  myQueue.pop(urlQueueName);
+  qmgr.pop(urlQueueName, onData);
   return console.log('Waiting for data...');
 });
 
@@ -37,44 +37,40 @@ checkArgs = function() {
 };
 
 initEventHandlers = function() {
-  myQueue.on('end', function() {
+  qmgr.on('end', function() {
     console.log('worker01 detected Redis connection ended');
-    return done();
+    return shutDown();
   });
-  myQueue.on('error', function(error) {
+  return qmgr.on('error', function(error) {
     console.log('worker01 stopping due to: ' + error);
-    return done();
-  });
-  myQueue.on('timeout', function() {
-    if (verbose) {
-      return console.log('worker01 timeout');
-    }
-  });
-  return myQueue.on('message', function(queueName, url) {
-    console.log('message url = ' + url);
-    if (typeof url === 'string') {
-      if (url === '***stop***') {
-        console.log('worker01 stopping');
-        done();
-      }
-      console.log('worker01 processing URL "' + url + '"');
-      return request(url, function(error, response, body) {
-        var sha1;
-        if (!error && response.statusCode === 200) {
-          sha1 = SHA1(body);
-          console.log(url + ' SHA1 = ' + sha1);
-          myQueue.pop(urlQueueName);
-        } else {
-          console.log(error);
-        }
-      });
-    } else {
-      return console.log('Unexpected message: ', url);
-    }
+    return shutDown();
   });
 };
 
-done = function() {
-  myQueue.end();
+onData = function(url) {
+  console.log('message url = ' + url);
+  if (typeof url === 'string') {
+    if (url === '***stop***') {
+      console.log('worker01 stopping');
+      shutDown();
+    }
+    console.log('worker01 processing URL "' + url + '"');
+    return request(url, function(error, response, body) {
+      var sha1;
+      if (!error && response.statusCode === 200) {
+        sha1 = SHA1(body);
+        console.log(url + ' SHA1 = ' + sha1);
+        qmgr.pop(urlQueueName, onData);
+      } else {
+        console.log(error);
+      }
+    });
+  } else {
+    return console.log('Unexpected message: ', url);
+  }
+};
+
+shutDown = function() {
+  qmgr.end();
   return process.exit();
 };

@@ -1,6 +1,6 @@
 'use strict';
 
-var WorkQueueBroker, createWorkQueues, done, initEventHandlers, myBroker, myWorkQueue1, myWorkQueue2, queuesActive, subscribeToQueues;
+var WorkQueueBroker, consumeData, createWorkQueues, initEventHandlers, myBroker, myWorkQueue1, myWorkQueue2, queuesActive, shutDown;
 
 myWorkQueue1 = null;
 
@@ -10,7 +10,7 @@ myBroker = null;
 
 queuesActive = 0;
 
-WorkQueueBroker = require('../../lib/workQueueBroker');
+WorkQueueBroker = require('node-redis-queue').WorkQueueBroker;
 
 myBroker = new WorkQueueBroker();
 
@@ -18,17 +18,18 @@ myBroker.connect(function() {
   console.log('work queue broker ready');
   initEventHandlers();
   createWorkQueues();
-  subscribeToQueues();
+  consumeData();
   return console.log('waiting for data...');
 });
 
 initEventHandlers = function() {
   myBroker.on('error', function(error) {
     console.log('>>>' + error);
-    return end();
+    return shutDown();
   });
   return myBroker.on('end', function() {
-    return console.log('>>>End Redis connection');
+    console.log('>>>End Redis connection');
+    return shutDown();
   });
 };
 
@@ -38,27 +39,26 @@ createWorkQueues = function() {
   return queuesActive = 2;
 };
 
-subscribeToQueues = function() {
-  console.log('subscribing to queue "test-queue-1"');
-  myWorkQueue1.subscribe(function(payload, ack) {
+consumeData = function() {
+  console.log('consuming queue "work-queue-1"');
+  myWorkQueue1.consume(function(payload, ack) {
     console.log('received message "' + payload + '" in queue "work-queue-1"');
     if (payload === '***stop***' && --queuesActive === 0) {
-      end();
+      shutDown();
     }
     return ack();
   });
-  console.log('subscribing to queue "test-queue-2"');
-  return myWorkQueue2.subscribe(function(payload, ack) {
+  console.log('consuming queue "work-queue-2"');
+  return myWorkQueue2.consume(function(payload, ack) {
     console.log('received message "' + payload + '" in queue "work-queue-2"');
     if (payload === '***stop***' && --queuesActive === 0) {
-      done();
+      shutDown();
     }
     return ack();
   });
 };
 
-done = function() {
-  console.log('quitting');
+shutDown = function() {
   myBroker.end();
   return process.exit();
 };

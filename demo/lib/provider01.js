@@ -1,12 +1,12 @@
 'use strict';
 
-var RedisQueue, clearInitially, enqueueURLs, initEventHandlers, main, myQueue, stopWorker, urlQueueName, urls;
+var QueueMgr, clearInitially, enqueueURLs, initEventHandlers, main, qmgr, stopWorker, urlQueueName, urls;
 
-RedisQueue = require('../../../node-redis-queue');
+QueueMgr = require('node-redis-queue').QueueMgr;
 
 urlQueueName = 'urlq';
 
-myQueue = null;
+qmgr = null;
 
 clearInitially = process.argv[2] === 'clear';
 
@@ -14,20 +14,19 @@ stopWorker = process.argv[2] === 'stop';
 
 urls = ['http://www.google.com', 'http://www.yahoo.com', 'http://ourfamilystory.com', 'http://ourfamilystory.com/pnuke'];
 
-myQueue = new RedisQueue;
+qmgr = new QueueMgr;
 
-myQueue.connect(function() {
+qmgr.connect(function() {
   console.log('connected');
   initEventHandlers();
   return main();
 });
 
 initEventHandlers = function() {
-  myQueue.on('end', function() {
+  return qmgr.on('end', function() {
     console.log('provider01 finished');
     return process.exit();
-  });
-  return myQueue.on('error', function(error) {
+  }).on('error', function(error) {
     console.log('provider01 stopping due to: ' + error);
     return process.exit();
   });
@@ -35,19 +34,19 @@ initEventHandlers = function() {
 
 main = function() {
   if (clearInitially) {
-    return myQueue.clear(urlQueueName, function() {
+    return qmgr.clear(urlQueueName, function() {
       console.log('Cleared "' + urlQueueName + '"');
       enqueueURLs();
-      return myQueue.disconnect();
+      return qmgr.disconnect();
     });
   } else {
     if (!stopWorker) {
       enqueueURLs();
     } else {
       console.log('Stopping worker');
-      myQueue.push(urlQueueName, '***stop***');
+      qmgr.push(urlQueueName, '***stop***');
     }
-    return myQueue.disconnect();
+    return qmgr.disconnect();
   }
 };
 
@@ -56,6 +55,6 @@ enqueueURLs = function() {
   for (_i = 0, _len = urls.length; _i < _len; _i++) {
     url = urls[_i];
     console.log('Pushing "' + url + '" to queue "' + urlQueueName + '"');
-    myQueue.push(urlQueueName, url);
+    qmgr.push(urlQueueName, url);
   }
 };
