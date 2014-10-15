@@ -1,14 +1,29 @@
 node-redis-queue
 =======
 
-This is a very simple queing wrapper for Redis that is intended for communication between separate processes.
+This is a very simple queing wrapper for Redis that is intended for communication between separate processes. It comes with two APIs:
 
-The sending process pushes data onto the queue using the `push` function. The receiving process monitors for data
-appearing in the queue using the `monitor` function. The receiving process listens for a 'message' event, which
-delivers the data to a callback function.
+1. QueueMgr -- the push/pop interface
 
-Additional functions include `clear` to clear the queue and `stopMonitoring` to indicate that no further monitoring
-is desired.
+The process creates a single instance of QueueMgr.
+The sending process uses the QueueMgr instance to push data onto the queue via the `push` function. The receiving process uses
+the QueueMgr instance to remove data from the same queue via the `pop` function, which delivers the data to a callback function
+which accepts a single data parameter.
+
+2. WorkQueueBroker -- the send/consume interface
+
+The process creates a single instance of WorkQueueBroker.
+Then, it uses that instance to create one or more instances of WorkQueue, each representing a different queue having a unique name.
+The sending process uses a WorkQueue instance to send data to the queue via the `send` function. The receiving process uses
+a WorkQueue instance to remove data from the given queue via the `consume` function, which delivers the data to a callback function
+which accepts a data parameter and an ack parameter. The latter is a function that is called to indicate that the callback function
+is complete and is ready to accept some additional data, if any, in the queue. See the worker03 and worker04 files in the demo src
+or lib directories for examples of how to do this.
+
+`consume` is different from `pop` in that a single call to `consume` can fetch
+multiple data items from the given queue, while `pop` must be called repeatedly to fetch items from the queue.
+
+An additional function present in both interfaces is `clear`, which clears the given queue and then calls the provided callback.
 
 ##Installation
 
@@ -16,117 +31,117 @@ is desired.
 
 ##Usage
 
-###Coffescript Usage Example
+###QueueMgr Coffescript Usage Example
 
 1. Ensure you have a Redis server installed and running. For example, once installed, you can run it locally by
 
         redis-server &
 
-2. Require `node-redis-queue`
+2. Require `node-redis-queue` QueueMgr
 
-        RedisQueue = require 'node-redis-queue'
+        QueueMgr = require('node-redis-queue').QueueMgr
 
-3. Create a RedisQueue instance and connect to Redis
+3. Create a QueueMgr instance and connect to Redis
 
-        myQueue = new RedisQueue  
-        myQueue.connect ->
+        qmgr = new QueueMgr()  
+        qmgr.connect ->
           console.log 'ready'
           myMainLogic()
 
   Alternatively, you can provide an existing Redis connection
 
-        myQueue.attach redisConn
+        qmgr.attach redisConn
 
-4. Optionally, clear previous data from the queue
+4. Optionally, clear previous data from the queue, providing a callback
+   to handle the data.
 
-        myQueue.clear myQueueName
+        qmgr.clear queueName, ->
+          console.log 'cleared'
 
 5. Optionally, push data to your queue
 
-        myQueue push myQueueName, myData
+        qmgr push queueName, myData
 
 6. Optionally, handle error events
 
-        myQueue.on 'error', (error) ->  
+        qmgr.on 'error', (error) ->  
             console.log 'Stopping due to: ' + error  
             process.exit()
 
-7. Optionally, handle timeout events
+7. Optionally, handle lost connection events
 
-        myQueue.on 'timeout', ->  
-            console.log 'timeout event'
+        qmgr.on 'end', ->
+          console.log 'Connection lost'
 
-8. Optionally, handle 'message' events and subsequently monitor for data in the queue
+8. Optionally, pop data off your queue
 
-        myQueue.on 'message', (queueName, myData) ->  
+        qmgr.pop queueName, (myData) ->  
             console.log 'data = ' + myData 
-        ...  
-        myQueue.monitor timeout, myQueueName
 
-  The timeout is in seconds.
+9. When done, quit the QueueMgr instance
 
-9. When done, quit the Redis client
+        qmgr.disconnect()
 
-        myQueue.disconnect()
+  or, alternatively, if monitoring, end the connection
 
-  or, alternatively, if monitoring,
+        qmgr.end()
 
-        myQueue.end()
-
-###Javascript Usage Example
+###QueueMgr Javascript Usage Example
 
 1. Ensure you have a Redis server installed and running. For example, once installed, you can run it locally by
 
         redis-server &
 
-2. Require `node-redis-queue`
+2. Require `node-redis-queue` QueueMgr
 
-        var RedisQueue = require('node-redis-queue');
+        var QueueMgr = require('node-redis-queue').QueueMgr;
 
 
-3. Create a RedisQueue instance and connect to Redis
+3. Create a QueueMgr instance and connect to Redis
 
-        var myQueue = new RedisQueue();  
-        myQueue.connect();
+        var qmgr = new QueueMgr();  
+        qmgr.connect(function() {
+          console.log('ready');
+          myMainLogic();
+        });
 
-4. Optionally, clear previous data from the queue
+4. Optionally, clear previous data from the queue, providing a callback.
 
-        myQueue.clear(myQueueName);
+        qmgr.clear(qmgrName, function() {
+          console.log('cleared');
+        });
 
 5. Optionally, push data to your queue
 
-        myQueue.push(myQueueName, myData);
+        qmgr.push(qmgrName, myData);
 
 6. Optionally, handle error events
 
-        myQueue.on('error', function(error) {  
+        qmgr.on('error', function(error) {  
             console.log('Stopping due to: ' + error);  
             process.exit();
         });
 
-7. Optionally, handle timeout events
+7. Optionally, handle lost connection events
 
-        myQueue.on('timeout', function() {  
-            console.log('timeout event');
+        qmgr.on('end', function() {
+          console.log('Connection lost');
         });
 
-8. Optionally, handle 'message' events and subsequently monitor for data in the queue
+8. Optionally, pop data off your queue, providing a callback to
+   handle the data
 
-        myQueue.on('message', function(queueName, myData) {  
+        qmgr.pop(queueName, function(myData) {  
             console.log('data = ' + myData); 
         });
-        ...  
-        myQueue.monitor(timeout, myQueueName);
 
-  The timeout is in seconds.
+9. When done, quit the QueueMgr instance
 
-9. When done, quit the Redis client
+        qmgr.disconnect();
 
-        myQueue.disconnect();
+  or, alternatively, if monitoring, end the connection
 
-  or, alternatively,
-
-        myQueue.end();
+        qmgr.end();
 
 ##Running grunt for development tasks
 
@@ -172,11 +187,15 @@ Note that, when running worker01, one optionally may use a 'mem' parameter to mo
 
 ##Running the demo 02 code
 
-The code now is available, but is awaiting documentation here.
+The code now is available. Consult the first few lines of the demo src example files for instructions on how to run the demo.
 
 ##Running the demo 03 code
 
-The code now is available, but is awaiting documentation here.
+The code now is available. Consult the first few lines of the demo src example files for instructions on how to run the demo.
+
+##Running the demo 04 code
+
+The code now is available. Consult the first few lines of the demo src example files for instructions on how to run the demo.
 
 ##Note:
 
