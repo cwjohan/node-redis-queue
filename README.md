@@ -180,26 +180,6 @@ The code now is available, but is awaiting documentation here.
 
 ##Note:
 
-This work is derived from node-simple-redis-queue v0.9.3 by James Smith and
-retains the same license. I chose not to fork the project directly since I
-want to be free to make major changes and to have control over future changes
-since this code will be published in other media.
-
-Changes from the original code include, among others:
-
-1. Different error handling.
-2. Transparent use of JSON.stringify and JSON.parse to ensure
-   that what you get out of the queue is the same as what you put in.
-3. Addition of a timeout parameter to the monitor function.
-4. Addition of a connect function that optionally takes an existing Redis client as an argument.
-5. Emitting of connection 'end' events.
-6. Emitting of connection 'error' events.
-7. Emitting of Redis wait 'timeout' events.
-8. Addition of tests using jasmine-node. Run by `npm test`.
-9. Addition of demo code in the demo directory.
-10. Addition of a disconnect function.
-11. Addition of a stopMonitoring function.
-12. Changes to the Gruntfile to use coffeelint and jshint and to run the test suite.
-13. Addition of workQueueBroker and pub/sub functionality
-
-
+Part of this work is derived from node-simple-redis-queue v0.9.3 by James Smith and
+retains the same license. However, the current version bears very little resemblance
+to the original.
