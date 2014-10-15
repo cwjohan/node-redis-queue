@@ -27,9 +27,9 @@ An additional function present in both interfaces is `clear`, which clears the g
 
 ##Events Emitted by Both Interfaces
 
-###'error' -- error reported by Redis
+* `'error'` -- emitted when an error is reported by Redis
 
-###'end' -- connection lost from Redis server
+* `'end'` -- connection lost from Redis server
 
 ##Installation
 
