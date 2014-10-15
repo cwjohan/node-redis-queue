@@ -1,0 +1,13 @@
+{
+  "verbose": true,
+  "redis_provider": {
+    "type": "Custom",
+    "host": "127.0.0.1",
+    "port": 6379,
+    "pass": null
+  },
+  "redis_options": {
+    "retry_max_delay": 500
+  }
+}
+

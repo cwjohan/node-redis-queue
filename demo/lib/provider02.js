@@ -1,64 +1,94 @@
 'use strict';
 
-var RedisQueue, clearInitially, myQueue, queueURLs, redis, redisConn, redisHost, redisPort, redisQueueName, redisQueueTimeout, stopWorker, urls;
+var QueueMgr, clearInitially, enqueueURLs, initEventHandlers, main, onData, providerId, qmgr, resultQueueName, resultQueueTimeout, resultsExpected, shutDown, stopWorker, urlQueueName, urls;
 
-redis = require('redis');
+QueueMgr = require('node-redis-queue').QueueMgr;
 
-RedisQueue = require('../../../node-redis-queue');
+urlQueueName = 'urlq';
 
-redisPort = 6379;
+providerId = process.argv[2];
 
-redisHost = '127.0.0.1';
+if (!providerId) {
+  console.log('Missing provider id argument');
+  process.exit();
+}
 
-redisQueueName = 'urlq';
+resultQueueName = 'urlshaq' + providerId;
 
-redisQueueTimeout = 1;
+resultQueueTimeout = 1;
 
-redisConn = null;
-
-myQueue = null;
-
-clearInitially = process.argv[2] === 'clear';
+clearInitially = process.argv[3] === 'clear';
 
 stopWorker = process.argv[2] === 'stop';
 
-urls = ['http://www.google.com', 'http://www.yahoo.com'];
+urls = ['http://www.google.com', 'http://www.yahoo.com', 'http://ourfamilystory.com', 'http://ourfamilystory.com/pnuke'];
 
-redisConn = redis.createClient(redisPort, redisHost);
+resultsExpected = 0;
 
-myQueue = new RedisQueue(redisConn, redisQueueTimeout);
+qmgr = new QueueMgr;
 
-myQueue.on('end', function() {
-  console.log('provider01 finished');
-  return process.exit();
+qmgr.connect(function() {
+  console.log('connected');
+  initEventHandlers();
+  return main();
 });
 
-myQueue.on('error', function(error) {
-  console.log('provider01 stopping due to: ' + error);
-  return process.exit();
-});
+initEventHandlers = function() {
+  qmgr.on('end', function() {
+    console.log('provider01 finished');
+    return shutDown();
+  });
+  return qmgr.on('error', function(error) {
+    console.log('provider01 stopping due to: ' + error);
+    return shutDown();
+  });
+};
 
-queueURLs = function() {
-  var url, _i, _len;
-  for (_i = 0, _len = urls.length; _i < _len; _i++) {
-    url = urls[_i];
-    console.log('Pushing "' + url);
-    myQueue.push(redisQueueName, url);
+main = function() {
+  if (clearInitially) {
+    return qmgr.clear(urlQueueName, function() {
+      console.log('Cleared "' + urlQueueName + '"');
+      return qmgr.clear(resultQueueName, function() {
+        console.log('Cleared "' + resultQueueName + '"');
+        return shutDown();
+      });
+    });
+  } else {
+    if (!stopWorker) {
+      return enqueueURLs();
+    } else {
+      console.log('Stopping worker');
+      qmgr.push(urlQueueName, '***stop***');
+      return shutDown();
+    }
   }
 };
 
-if (stopWorker) {
-  console.log('Stopping worker');
-  myQueue.push(redisQueueName, '***stop***');
-} else {
-  if (clearInitially) {
-    myQueue.clear(redisQueueName, function() {
-      console.log('Cleared "' + redisQueueName + '"');
-      return queueURLs();
+enqueueURLs = function() {
+  var url, _i, _len;
+  for (_i = 0, _len = urls.length; _i < _len; _i++) {
+    url = urls[_i];
+    console.log('Pushing "' + url + '"');
+    qmgr.push(urlQueueName, {
+      url: url,
+      q: resultQueueName
     });
-  } else {
-    queueURLs();
+    ++resultsExpected;
   }
-}
+  qmgr.pop(resultQueueName, onData);
+  return console.log('waiting for responses from worker...');
+};
 
-redisConn.quit();
+onData = function(result) {
+  console.log('result = ', result);
+  if (--resultsExpected) {
+    return qmgr.pop(resultQueueName, onData);
+  } else {
+    return shutDown();
+  }
+};
+
+shutDown = function() {
+  qmgr.end();
+  return process.exit();
+};

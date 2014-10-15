@@ -1,68 +1,76 @@
 'use strict';
 
-var RedisQueue, SHA1, memwatch, myQueue, redis, redisClient, redisHost, redisPort, redisQueueName, redisQueueTimeout, request;
+var QueueMgr, SHA1, checkArgs, initEventHandlers, onData, qmgr, request, shutDown, urlQueueName, verbose;
 
-SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1;
+QueueMgr = require('node-redis-queue').QueueMgr;
 
 request = require('request');
 
-redis = require('redis');
+SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1;
 
-RedisQueue = require('../../../node-redis-queue');
+urlQueueName = 'urlq';
 
-redisPort = 6379;
+qmgr = null;
 
-redisHost = '127.0.0.1';
+verbose = process.argv[3] === 'verbose';
 
-redisQueueName = 'urlq';
+qmgr = new QueueMgr;
 
-redisQueueTimeout = 1;
-
-redisClient = null;
-
-myQueue = null;
-
-if (process.argv[2] === 'mem') {
-  memwatch = require('memwatch');
-  memwatch.on('stats', function(d) {
-    return console.log('>>>current = ' + d.current_base + ', max = ' + d.max);
-  });
-  memwatch.on('leak', function(d) {
-    return console.log('>>>LEAK = ', d);
-  });
-}
-
-redisClient = redis.createClient(redisPort, redisHost);
-
-myQueue = new RedisQueue(redisClient, redisQueueTimeout);
-
-myQueue.on('end', function() {
-  console.log('worker01 detected Redis connection ended');
-  return process.exit();
+qmgr.connect(function() {
+  checkArgs();
+  initEventHandlers();
+  qmgr.pop(urlQueueName, onData);
+  return console.log('Waiting for data...');
 });
 
-myQueue.on('error', function(error) {
-  console.log('worker01 stopping due to: ' + error);
-  return process.exit();
-});
-
-myQueue.on('timeout', function() {
-  return console.log('worker01 timeout');
-});
-
-myQueue.on('message', function(queueName, url) {
-  console.log('worker01 processing URL "' + url + '"');
-  if (url === '***stop***') {
-    console.log('worker01 stopping');
-    process.exit();
+checkArgs = function() {
+  var memwatch;
+  if (process.argv[2] === 'mem') {
+    memwatch = require('memwatch');
+    memwatch.on('stats', function(d) {
+      return console.log('>>>current = ' + d.current_base + ', max = ' + d.max);
+    });
+    return memwatch.on('leak', function(d) {
+      return console.log('>>>LEAK = ', d);
+    });
   }
-  return request(url, function(error, response, body) {
-    if (!error && response.statusCode === 200) {
-      return console.log(url + ' SHA1 = ' + SHA1(body));
-    } else {
-      return console.log(error);
-    }
-  });
-});
+};
 
-myQueue.monitor(redisQueueName);
+initEventHandlers = function() {
+  qmgr.on('end', function() {
+    console.log('worker01 detected Redis connection ended');
+    return shutDown();
+  });
+  return qmgr.on('error', function(error) {
+    console.log('worker01 stopping due to: ' + error);
+    return shutDown();
+  });
+};
+
+onData = function(url) {
+  console.log('message url = ' + url);
+  if (typeof url === 'string') {
+    if (url === '***stop***') {
+      console.log('worker01 stopping');
+      shutDown();
+    }
+    console.log('worker01 processing URL "' + url + '"');
+    return request(url, function(error, response, body) {
+      var sha1;
+      if (!error && response.statusCode === 200) {
+        sha1 = SHA1(body);
+        console.log(url + ' SHA1 = ' + sha1);
+        qmgr.pop(urlQueueName, onData);
+      } else {
+        console.log(error);
+      }
+    });
+  } else {
+    return console.log('Unexpected message: ', url);
+  }
+};
+
+shutDown = function() {
+  qmgr.end();
+  return process.exit();
+};

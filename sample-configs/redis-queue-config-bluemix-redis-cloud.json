@@ -1,0 +1,8 @@
+{
+  "redis-provider": {
+    "type": "BlueMixRedisCloud"
+  },
+  "redis_options": {
+    "retry_max_delay": 500
+  }
+}

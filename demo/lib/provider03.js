@@ -1,0 +1,104 @@
+'use strict';
+
+var WorkQueueBroker, clear, clearWorkQueues, createWorkQueues, expectedItemsQ1, expectedItemsQ2, initEventHandlers, itemCntQ1, itemCntQ2, myBroker, myWorkQueue1, myWorkQueue2, sendData, sendStop, shutDown, stop;
+
+myWorkQueue1 = null;
+
+myWorkQueue2 = null;
+
+myBroker = null;
+
+expectedItemsQ1 = ['item one', 'item two', 'item three'];
+
+itemCntQ1 = 0;
+
+expectedItemsQ2 = ['item foo', 'item bar', 'item baz'];
+
+itemCntQ2 = 0;
+
+clear = process.argv[2] === 'clear';
+
+stop = process.argv[2] === 'stop';
+
+WorkQueueBroker = require('node-redis-queue').WorkQueueBroker;
+
+myBroker = new WorkQueueBroker();
+
+myBroker.connect(function() {
+  console.log('work queue broker ready');
+  initEventHandlers();
+  createWorkQueues();
+  if (stop) {
+    sendStop();
+    shutDown();
+  }
+  if (clear) {
+    return clearWorkQueues(function() {
+      sendData();
+      return shutDown();
+    });
+  } else {
+    sendData();
+    return shutDown();
+  }
+});
+
+initEventHandlers = function() {
+  myBroker.on('error', function(error) {
+    console.log('>>>' + error);
+    return shutDown();
+  });
+  return myBroker.on('end', function() {
+    console.log('>>>End Redis connection');
+    return shutDown();
+  });
+};
+
+createWorkQueues = function() {
+  myWorkQueue1 = myBroker.createQueue('work-queue-1');
+  return myWorkQueue2 = myBroker.createQueue('work-queue-2');
+};
+
+clearWorkQueues = function(done) {
+  var queuesToClear;
+  queuesToClear = 2;
+  myWorkQueue1.clear(function() {
+    console.log('Cleared "work-queue-1"');
+    if (!--queuesToClear) {
+      return done();
+    }
+  });
+  return myWorkQueue2.clear(function() {
+    console.log('Cleared "work-queue-2"');
+    if (!--queuesToClear) {
+      return done();
+    }
+  });
+};
+
+sendData = function() {
+  var item, _i, _j, _len, _len1, _results;
+  for (_i = 0, _len = expectedItemsQ1.length; _i < _len; _i++) {
+    item = expectedItemsQ1[_i];
+    console.log('publishing "' + item + '" to queue "work-queue-1"');
+    myWorkQueue1.send(item);
+  }
+  _results = [];
+  for (_j = 0, _len1 = expectedItemsQ2.length; _j < _len1; _j++) {
+    item = expectedItemsQ2[_j];
+    console.log('publishing "' + item + '" to queue "work-queue-2"');
+    _results.push(myWorkQueue2.send(item));
+  }
+  return _results;
+};
+
+sendStop = function() {
+  console.log('stopping worker03');
+  myWorkQueue1.send('***stop***');
+  return myWorkQueue2.send('***stop***');
+};
+
+shutDown = function() {
+  myBroker.end();
+  return process.exit();
+};

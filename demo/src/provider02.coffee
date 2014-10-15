@@ -1,46 +1,83 @@
 'use strict'
-redis = require 'redis'
-RedisQueue = require '../../../node-redis-queue'
-redisPort = 6379
-redisHost = '127.0.0.1'
-redisQueueName = 'urlq'
-redisQueueTimeout = 1
-redisConn = null
-myQueue = null
-clearInitially = process.argv[2] is 'clear'
+# For each URL in the urls list, this app puts a work request in 'urlq' queue
+# and waits for the results to be returned in 'urlshaq01' or whatever,
+# depending on the providerId parameter.
+#
+# Usage:
+#     cd demo/lib
+#     export NODE_PATH='../../..'
+#     node provider02.js <providerId> [clear]
+#   or
+#     node provider02.js stop
+#
+#   where <providerId> is something to make this provider instance unique,
+#   such as "01", "02", "foo", "bar", or whatever.
+#
+#   Use this app in conjunction with worker02.js. See the worker02 source code
+#   for more details.
+QueueMgr = require('node-redis-queue').QueueMgr
+urlQueueName = 'urlq'
+providerId = process.argv[2]
+unless providerId
+  console.log 'Missing provider id argument'
+  process.exit()
+resultQueueName = 'urlshaq' + providerId
+resultQueueTimeout = 1
+clearInitially = process.argv[3] is 'clear'
 stopWorker = process.argv[2] is 'stop'
 urls = [
   'http://www.google.com',
-  'http://www.yahoo.com'
+  'http://www.yahoo.com',
+  'http://ourfamilystory.com',
+  'http://ourfamilystory.com/pnuke'
 ]
+resultsExpected = 0
 
-redisConn = redis.createClient redisPort, redisHost
-myQueue = new RedisQueue redisConn, redisQueueTimeout
+qmgr = new QueueMgr
+qmgr.connect ->
+  console.log 'connected'
+  initEventHandlers()
+  main()
 
-myQueue.on 'end', () ->
-  console.log 'provider01 finished'
-  process.exit()
+initEventHandlers = ->
+  qmgr.on 'end', ->
+    console.log 'provider01 finished'
+    shutDown()
 
-myQueue.on 'error', (error) ->
-  console.log 'provider01 stopping due to: ' + error
-  process.exit()
+  qmgr.on 'error', (error) ->
+    console.log 'provider01 stopping due to: ' + error
+    shutDown()
 
-queueURLs = () ->
-  for url in urls
-    console.log 'Pushing "' + url
-    myQueue.push redisQueueName, url
-  return
-
-if stopWorker
-  console.log 'Stopping worker'
-  myQueue.push redisQueueName, '***stop***'
-else
+main = ->
   if clearInitially
-    myQueue.clear redisQueueName, () ->
-      console.log 'Cleared "' + redisQueueName + '"'
-      queueURLs()
+    qmgr.clear urlQueueName, ->
+      console.log 'Cleared "' + urlQueueName + '"'
+      qmgr.clear resultQueueName, ->
+        console.log 'Cleared "' + resultQueueName + '"'
+        shutDown()
   else
-    queueURLs()
+    unless stopWorker
+      enqueueURLs()
+    else
+      console.log 'Stopping worker'
+      qmgr.push urlQueueName, '***stop***'
+      shutDown()
 
-redisConn.quit()
+enqueueURLs = ->
+  for url in urls
+    console.log 'Pushing "' + url + '"'
+    qmgr.push urlQueueName, {url: url, q: resultQueueName}
+    ++resultsExpected
+  qmgr.pop resultQueueName, onData
+  console.log 'waiting for responses from worker...'
 
+onData = (result) ->
+  console.log 'result = ', result
+  if --resultsExpected
+    qmgr.pop resultQueueName, onData
+  else
+    shutDown()
+
+shutDown = ->
+  qmgr.end()
+  process.exit()
