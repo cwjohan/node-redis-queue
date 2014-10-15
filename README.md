@@ -29,7 +29,7 @@ An additional function present in both interfaces is `clear`, which clears the g
 
 `'error'` -- emitted when an error is reported by Redis
 
-`'end'` -- connection lost from Redis server
+`'end'` -- emitted when a connection to the Redis server has been lost
 
 ##Installation
 
