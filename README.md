@@ -25,6 +25,12 @@ multiple data items from the given queue, while `pop` must be called repeatedly 
 
 An additional function present in both interfaces is `clear`, which clears the given queue and then calls the provided callback.
 
+##Events Emitted by Both Interfaces
+
+###'error' -- error reported by Redis
+
+###'end' -- connection lost from Redis server
+
 ##Installation
 
     npm install node-redis-queue --save
