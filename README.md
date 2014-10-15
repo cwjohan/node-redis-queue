@@ -200,5 +200,5 @@ The code now is available. Consult the first few lines of the demo src example f
 ##Note:
 
 Part of this work is derived from node-simple-redis-queue v0.9.3 by James Smith and
-retains the same license. However, the current version bears very little resemblance
-to the original.
+retains the same license. However, the current version bears almost no resemblance
+to James' project.
