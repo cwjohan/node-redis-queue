@@ -5,20 +5,20 @@ This is a very simple queing wrapper for Redis that is intended for communicatio
 
 1. QueueMgr -- the push/pop interface
 
-The process creates a single instance of QueueMgr.
-The sending process uses the QueueMgr instance to push data onto the queue via the `push` function. The receiving process uses
-the QueueMgr instance to remove data from the same queue via the `pop` function, which delivers the data to a callback function
-which accepts a single data parameter.
+   The process creates a single instance of QueueMgr.
+   The sending process uses the QueueMgr instance to push data onto the queue via the `push` function. The receiving process uses
+   the QueueMgr instance to remove data from the same queue via the `pop` function, which delivers the data to a callback function
+   which accepts a single data parameter.
 
 2. WorkQueueBroker -- the send/consume interface
 
-The process creates a single instance of WorkQueueBroker.
-Then, it uses that instance to create one or more instances of WorkQueue, each representing a different queue having a unique name.
-The sending process uses a WorkQueue instance to send data to the queue via the `send` function. The receiving process uses
-a WorkQueue instance to remove data from the given queue via the `consume` function, which delivers the data to a callback function
-which accepts a data parameter and an ack parameter. The latter is a function that is called to indicate that the callback function
-is complete and is ready to accept some additional data, if any, in the queue. See the worker03 and worker04 files in the demo src
-or lib directories for examples of how to do this.
+   The process creates a single instance of WorkQueueBroker.
+   Then, it uses that instance to create one or more instances of WorkQueue, each representing a different queue having a unique name.
+   The sending process uses a WorkQueue instance to send data to the corresponding queue via the `send` function. The receiving process uses
+   a WorkQueue instance to remove data from the corresponding queue via the `consume` function, which delivers the data to a callback function
+   which accepts a data parameter and an ack parameter. The latter is a function that is called to indicate that the callback function
+   is complete and is ready to accept some additional data, if any, in the queue. See the worker03 and worker04 files in the demo src
+   or lib directories for examples of how to do this.
 
 `consume` is different from `pop` in that a single call to `consume` can fetch
 multiple data items from the given queue, while `pop` must be called repeatedly to fetch items from the queue.
