@@ -28,7 +28,6 @@
     "memwatch": "~0.2.2"
   },
   "scripts": {
-    "test": "node_modules/.bin/jasmine-node --verbose lib",
-    "mocha": "node_modules/.bin/mocha -R spec --compilers coffee:coffee-script/register test"
+    "test": "node_modules/.bin/mocha -R spec --compilers coffee:coffee-script/register test"
   }
 }
