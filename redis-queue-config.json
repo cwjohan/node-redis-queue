@@ -1,5 +1,5 @@
 {
-  "verbose": true,
+  "verbose": false,
   "redis_provider": {
     "type": "Custom",
     "host": "127.0.0.1",
