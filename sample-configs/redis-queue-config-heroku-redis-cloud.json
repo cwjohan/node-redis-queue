@@ -1,8 +1,9 @@
 {
-  "redis-provider": {
+  "verbose": false,
+  "redis_provider": {
     "type": "HerokuRedisCloud"
   },
   "redis_options": {
-    "retry_max_delay": 500
+    "retry_max_delay": 2000
   }
 }

@@ -28,9 +28,9 @@ class WorkQueue
 class WorkQueueBrokerError extends Error
 
 class WorkQueueBroker extends events.EventEmitter
-  constructor: ->
+  constructor: (configFilePath) ->
     @queues = {}
-    @qmgr = new QueueMgr()
+    @qmgr = new QueueMgr(configFilePath)
     return this
 
   connect: (onReady) ->

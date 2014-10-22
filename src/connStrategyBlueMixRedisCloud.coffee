@@ -11,7 +11,11 @@ class ConnStrategyCustom
       @client.auth credentials.password if credentials.password
       return @client
     else
-      console.log 'VCAP_SERVICES environment variable not set'
-      throw Error 'Undefined VCAP_SERVICES'
+      console.log 'VCAP_SERVICES environment variable not set. Assume local redis server'
+      redisPort = 6379
+      redisHost = '127.0.0.1'
+      redisOptions = @config.redis_options
+      @client = redis.createClient redisPort, redisHost, redisOptions
+      return @client
 
 module.exports = new ConnStrategyCustom

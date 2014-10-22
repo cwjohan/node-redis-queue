@@ -4,9 +4,12 @@ events = require 'events'
 class QueueMgrError extends Error
 
 class QueueMgr extends events.EventEmitter
-  constructor: ->
+  constructor: (configFilePath) ->
+    configFilePath = process.env.QUEUE_CONFIG_FILE or
+                     configFilePath or
+                     '../redis-queue-config.json'
     @configurator = require './redisQueueConfig'
-    @config = @configurator.getConfig()
+    @config = @configurator.getConfig(configFilePath)
 
   connect: (onReady) ->
     @client = @configurator.getClient(@config)

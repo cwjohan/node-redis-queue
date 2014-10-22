@@ -2,7 +2,7 @@
 redis = require 'redis'
 url = require 'url'
 
-class ConnStrategyCustom
+class ConnStrategyHerokuRedisCloud
   getClient: (@config) ->
     if process.env.REDISCLOUD_URL
       redisURL = url.parse process.env.REDISCLOUD_URL
@@ -12,7 +12,11 @@ class ConnStrategyCustom
       @client.auth redisPass if redisPass
       return @client
     else
-      console.log 'REDISCLOUD_URL environment variable not set'
-      throw Error('Undefined REDISCLOUD_URL')
+      console.log 'REDISCLOUD_URL environment variable not set. Assume local redis-server.'
+      redisPort = 6379
+      redisHost = '127.0.0.1'
+      redisOptions = @config.redis_options
+      @client = redis.createClient redisPort, redisHost, redisOptions
+      return @client
 
-module.exports = new ConnStrategyCustom
+module.exports = new ConnStrategyHerokuRedisCloud
