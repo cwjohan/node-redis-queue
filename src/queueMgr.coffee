@@ -27,6 +27,8 @@ class QueueMgr extends events.EventEmitter
     @client.on 'end', =>
       @ready = false
       @emit 'end'
+    @client.on 'drain', =>
+      @emit 'drain'
     return this
 
   push: (key, data) ->
@@ -40,6 +42,18 @@ class QueueMgr extends events.EventEmitter
       else
         if replies? and replies instanceof Array and replies.length is 2
           onData(JSON.parse(replies[1])) if onData
+        else
+          if replies?
+            @emit 'error', new QueueMgrError 'Replies not Array of two elements'
+    return this
+
+  popAny: (keys..., onData) ->
+    @client.brpop keys..., 0, (err, replies) =>
+      if err?
+        @emit 'error', err
+      else
+        if replies? and replies instanceof Array and replies.length is 2
+          onData(replies[0], JSON.parse(replies[1])) if onData
         else
           if replies?
             @emit 'error', new QueueMgrError 'Replies not Array of two elements'

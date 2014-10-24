@@ -59,18 +59,18 @@ consumeData = function() {
   console.log('consuming queue "work-queue-1"');
   myWorkQueue1.consume(function(payload, ack) {
     console.log('received message "' + payload + '" in queue "work-queue-1"');
+    ack(payload === '***stop***');
     if (payload === '***stop***' && --queuesActive === 0) {
-      shutDown();
+      return myBroker.end();
     }
-    return ack();
   });
   console.log('consuming queue "work-queue-2"');
   return myWorkQueue2.consume(function(payload, ack) {
     console.log('received message "' + payload + '" in queue "work-queue-2"');
+    ack(payload === '***stop***');
     if (payload === '***stop***' && --queuesActive === 0) {
-      shutDown();
+      return myBroker.end();
     }
-    return ack();
   });
 };
 

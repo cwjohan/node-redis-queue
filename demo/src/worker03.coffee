@@ -46,14 +46,14 @@ consumeData = ->
   console.log 'consuming queue "work-queue-1"'
   myWorkQueue1.consume (payload, ack) ->
     console.log 'received message "' + payload + '" in queue "work-queue-1"'
-    shutDown() if payload is '***stop***' and --queuesActive is 0
-    ack()
+    ack payload is '***stop***'
+    myBroker.end() if payload is '***stop***' and --queuesActive is 0
 
   console.log 'consuming queue "work-queue-2"'
   myWorkQueue2.consume (payload, ack) ->
     console.log 'received message "' + payload + '" in queue "work-queue-2"'
-    shutDown() if payload is '***stop***' and --queuesActive is 0
-    ack()
+    ack payload is '***stop***'
+    myBroker.end() if payload is '***stop***' and --queuesActive is 0
 
 shutDown = ->
   myBroker.end()

@@ -1,8 +1,8 @@
 'use strict'
 myWorkQueue1 = null
 myWorkQueue2 = null
-workQueue1Name = 'test-queue-1'
-workQueue2Name = 'test-queue-2'
+workQueue1Name = 'work-queue-1'
+workQueue2Name = 'work-queue-2'
 myBroker = null
 expectedItemsQ1 = [
     'item one',
@@ -21,8 +21,6 @@ WorkQueueBroker = require('..').WorkQueueBroker
 expect = (require 'chai').expect
 debug = process.env.DEBUG
 verbose = debug || process.env.VERBOSE
-cancel = process.env.CANCEL_AT_END
-console.log 'DETERMINATE MODE (cancel at end of data)' if cancel
 
 describe '===WorkQueueBroker send/consume===', ->
   it 'must connect to redis-server', (done) ->
@@ -31,6 +29,7 @@ describe '===WorkQueueBroker send/consume===', ->
       console.log 'work queue broker ready' if verbose
       myBroker.on 'error', (error) ->
         console.log '>>>' + error
+        throw error if error instanceof Error
         process.exit()
       myBroker.on 'end', ->
         console.log '>>>End WorkQueueBroker connection'
@@ -43,10 +42,10 @@ describe '===WorkQueueBroker send/consume===', ->
     expect(myWorkQueue2.queueName).to.equal(workQueue2Name)
     queuesToClear = 2
     myWorkQueue1.clear ->
-      console.log 'Cleared "work-queue-1"' if verbose
+      console.log 'Cleared "' + workQueue1Name + '"' if verbose
       done() unless --queuesToClear
     myWorkQueue2.clear ->
-      console.log 'Cleared "work-queue-2"' if verbose
+      console.log 'Cleared "' + workQueue2Name + '"' if verbose
       done() unless --queuesToClear
 
   it 'receives all published data from given queues (no interleaving)', (done) ->
@@ -71,7 +70,7 @@ describe '===WorkQueueBroker send/consume===', ->
         if verbose
       expect(data).to.equal expectedItemsQ1[itemCntQ1++]
       done() unless --itemsInQueues
-      ack(cancel and itemCntQ1 >= expectedItemsQ1.length)
+      ack itemCntQ1 >= expectedItemsQ1.length
 
     console.log 'consuming queue "test-queue-2"' if verbose
     itemCntQ2 = 0
@@ -80,7 +79,7 @@ describe '===WorkQueueBroker send/consume===', ->
         if verbose
       expect(data).to.equal expectedItemsQ2[itemCntQ2++]
       done() unless --itemsInQueues
-      ack(cancel and itemCntQ2 >= expectedItemsQ2.length)
+      ack itemCntQ2 >= expectedItemsQ2.length
 
   it 'receives all published data from given queues (interleaving)', (done) ->
     itemsInQueues = 0
@@ -110,14 +109,14 @@ describe '===WorkQueueBroker send/consume===', ->
         if debug
           console.log '>>>done Q1' unless itemsInQueues
           console.log '>>>ack Q1'
-        ack(cancel and (itemCntQ1 >= expectedItemsQ1.length))
+        ack itemCntQ1 >= expectedItemsQ1.length
       else
         setTimeout ->
           done() unless --itemsInQueues
           if debug
             console.log '>>>done Q1' unless itemsInQueues
             console.log '>>>ack Q1 timeout'
-          ack(cancel and (itemCntQ1 >= expectedItemsQ1.length))
+          ack itemCntQ1 >= expectedItemsQ1.length
         ,10
 
     console.log 'consuming queue "test-queue-2"' if verbose
@@ -131,14 +130,14 @@ describe '===WorkQueueBroker send/consume===', ->
         if debug
           console.log '>>>done Q2' unless itemsInQueues
           console.log '>>>ack Q2'
-        ack(cancel and (itemCntQ2 >= expectedItemsQ2.length))
+        ack itemCntQ2 >= expectedItemsQ2.length
       else
         setTimeout ->
           done() unless --itemsInQueues
           if debug
             console.log '>>>done Q2' unless itemsInQueues
             console.log '>>>ack Q2 timeout'
-          ack(cancel and (itemCntQ2 >= expectedItemsQ2.length))
+          ack itemCntQ2 >= expectedItemsQ2.length
         ,10
 
   it 'quits Redis cleanly', ->

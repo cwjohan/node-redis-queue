@@ -4,17 +4,11 @@ events = require 'events'
 QueueMgr = require('..').QueueMgr
 
 class WorkQueue
-  constructor: (@qmgr, @queueName, @options) ->
-    return this
-
-  ack_: (onData, cancel) ->
-    unless cancel
-      @consume onData
+  constructor: (@qmgr, @queueName, @options, @consume_) ->
     return this
 
   consume: (onData) ->
-    @qmgr.pop @queueName, (data) =>
-      onData data, @ack_.bind(this, onData)
+    @consume_(@queueName, onData)
     return this
 
   send: (data) ->
@@ -30,6 +24,7 @@ class WorkQueueBrokerError extends Error
 class WorkQueueBroker extends events.EventEmitter
   constructor: (configFilePath) ->
     @queues = {}
+    @consuming = {}
     @qmgr = new QueueMgr(configFilePath)
     return this
 
@@ -53,20 +48,34 @@ class WorkQueueBroker extends events.EventEmitter
       @emit 'end'
     
   createQueue: (queueName, options) ->
-    return @queues[queueName] = new WorkQueue @qmgr, queueName, options
+    return @queues[queueName] = new WorkQueue @qmgr, queueName, options, @consume.bind(this)
 
   send: (queueName, data) ->
     if @isValidQueueName
-      @queues[queueName].send data
+      @qmgr.push @queueName, data
     return this
 
   consume: (queueName, onData) ->
-    if @isValidQueueName queueName
-      @queues[queueName].consume onData
+    @consuming[queueName] = onData
+    process.nextTick @monitor_.bind(this)
     return this
+
+  ack_: (queueName, cancel) ->
+    if cancel
+      delete @consuming[queueName]
+    else
+      @monitor_()
+    return this
+
+  monitor_: () ->
+    args = Object.keys(@consuming)
+    args.push (queueName, data) =>
+      @consuming[queueName] data, @ack_.bind(this, queueName) if @consuming[queueName]
+    @qmgr.popAny.apply @qmgr, args
 
   destroyQueue: (queueName) ->
     if @isValidQueueName queueName
+      delete @consuming[queueName]
       delete @queues[queueName]
     return this
 
