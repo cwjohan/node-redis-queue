@@ -6,7 +6,7 @@ class ConnStrategyHerokuRedisCloud
   getClient: (@config) ->
     if process.env.REDISCLOUD_URL
       redisURL = url.parse process.env.REDISCLOUD_URL
-      redisPass = redisURL.auth.split(':')[1]
+      redisPass = redisURL.auth.split(':')[1] if redisURL.auth
       redisOptions = @config.redis_options
       @client = redis.createClient redisURL.port, redisURL.hostname, redisOptions
       @client.auth redisPass if redisPass
