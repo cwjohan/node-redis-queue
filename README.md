@@ -229,6 +229,8 @@ Corrected error in provision of Redis Cloud hostname;
 
 **v0.1.7**: Fix for issue #4 - Stall occurs when one of two work queues on same connection becomes empty.
 
+**v0.1.8**: Fix for REDISCLOUD_URL having no auth field; Created change log in README.md.
+
 
 ##Note:
 
