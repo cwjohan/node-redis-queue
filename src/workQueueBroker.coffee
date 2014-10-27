@@ -33,8 +33,8 @@ class WorkQueueBroker extends events.EventEmitter
     @initEmitters_()
     return this
 
-  attach: (@client, onReady) ->
-    @qmgr.attach @client, onReady
+  attach: (@client) ->
+    @qmgr.attach @client
     @initEmitters_()
 
   initEmitters_: ->
@@ -90,6 +90,9 @@ class WorkQueueBroker extends events.EventEmitter
   isValidQueueName: (queueName) ->
     return true if @queues[queueName]
     throw new WorkQueueBrokerError('Unknown queue "' + queueName + '"')
+
+  commandQueueLength: ->
+    @qmgr.commandQueueLength()
 
 exports.queue = WorkQueue
 exports.broker = WorkQueueBroker

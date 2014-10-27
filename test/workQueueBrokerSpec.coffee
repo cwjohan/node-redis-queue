@@ -95,6 +95,10 @@ describe '===WorkQueueBroker send/consume===', ->
                     '"' if verbose
         myWorkQueue2.send expectedItemsQ2[i]
         ++itemsInQueues
+    
+    console.log 'commandQueueLength = ' + myBroker.commandQueueLength() if verbose
+    expect(myBroker.commandQueueLength()).to.be.above(0)
+    expect(myBroker.commandQueueLength()).to.be.at.most(itemsInQueues)
 
     isEven = (n) -> n % 2 is 0
 

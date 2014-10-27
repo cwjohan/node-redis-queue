@@ -1,12 +1,17 @@
 {
   "name": "node-redis-queue",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "A simple, lightweight queue using Redis lpush and brpop",
   "main": "lib/index.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/cwjohan/node-redis-queue"
   },
+  "bugs": {
+    "url": "https://github.com/cwjohan/node-redis-queue/issues",
+    "email": "cwjohan[at]gmail[dot]com"
+  },
+
   "author": {
     "name": "Craig Johannsen",
     "email": "cwjohan[at]gmail[dot]com"

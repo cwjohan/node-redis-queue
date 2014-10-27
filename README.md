@@ -31,6 +31,10 @@ An additional function present in both interfaces is `clear`, which clears the g
 
 `'end'` -- emitted when a connection to the Redis server has been lost
 
+`'drain'` -- emitted when the TCP connection to the Redis server has been buffering, but is now writable. 
+This event can be used to stream commands in to Redis and adapt to backpressure: Call commandQueueLength 
+to detect when the length is too much, then use the `'drain'` event to resume sending data to the queue or queues.
+
 ##Installation
 
     npm install node-redis-queue --save
@@ -54,7 +58,7 @@ An additional function present in both interfaces is `clear`, which clears the g
           console.log 'ready'
           myMainLogic()
 
-  Alternatively, you can provide an existing Redis connection
+  Alternatively, you can provide an existing Redis connection (i.e., a redis client instance)
 
         qmgr.attach redisConn
 
@@ -63,10 +67,11 @@ An additional function present in both interfaces is `clear`, which clears the g
 
         qmgr.clear queueName, ->
           console.log 'cleared'
+          doImportantStuff()
 
 5. Optionally, push data to your queue
 
-        qmgr push queueName, myData
+        qmgr push.queueName, myData
 
 6. Optionally, handle error events
 
@@ -82,15 +87,88 @@ An additional function present in both interfaces is `clear`, which clears the g
 8. Optionally, pop data off your queue
 
         qmgr.pop queueName, (myData) ->  
+            console.log 'data = ' + myData
+
+  or, alternatively, off multiple queues
+
+        qmgr.popAny queueName1, queueName2, (myData) ->
             console.log 'data = ' + myData 
 
 9. When done, quit the QueueMgr instance
 
         qmgr.disconnect()
 
-  or, alternatively, if monitoring, end the connection
+  or, alternatively, if consuming data from the queue, end the connection
 
         qmgr.end()
+
+###WorkQueueBroker Coffeescript Usage Example
+
+1. Ensure you have a Redis server installed and running. For example, once installed, you can run it locally by
+
+        redis-server &
+
+2. Require `node-redis-queue` WorkQueueBroker
+
+        WorkQueueBroker = require('node-redis-queue').WorkQueueBroker
+
+3. Create a WorkQueueBroker instance and connect to Redis
+
+        broker = new WorkQueueBroker()  
+        broker.connect ->
+          console.log 'ready'
+          myMainLogic()
+
+  Alternatively, you can provide an existing Redis connection (i.e., a redis client instance)
+
+        broker.attach redisConn
+
+4. Create a work queue instance
+
+        queue = broker.createQueue queueName
+
+5. Optionally, clear previous data from the queue, providing a callback
+   to handle the data.
+
+        queue.clear queueName, ->
+          console.log 'cleared'   
+          doImportantStuff()
+
+6. Optionally, send data to your queue
+
+        queue.send queueName, myData
+
+7. Optionally, handle error events
+
+        broker.on 'error', (error) ->  
+            console.log 'Stopping due to: ' + error  
+            process.exit()
+
+8. Optionally, handle lost connection events
+
+        broker.on 'end', ->
+          console.log 'Connection lost'
+
+9. Optionally, consume data from your queue and call ack when ready to consume another data item
+
+        queue.consume (myData, ack) ->  
+            console.log 'data = ' + myData   
+            ...
+            ack()
+
+10. Optionally, destroy a work queue if no longer consuming from it and there are other queues being
+   consumed in the same process. Otherwise, not necessary.
+
+        broker.destroyQueue queueName
+
+11. When done, quit the WorkQueueBroker instance
+
+        broker.disconnect()
+
+  or, alternatively, if consuming data from the queue, end the connection
+
+        broker.end()
+
 
 ###QueueMgr Javascript Usage Example
 
@@ -115,6 +193,7 @@ An additional function present in both interfaces is `clear`, which clears the g
 
         qmgr.clear(qmgrName, function() {
           console.log('cleared');
+          doImportantStuff();
         });
 
 5. Optionally, push data to your queue
@@ -148,6 +227,78 @@ An additional function present in both interfaces is `clear`, which clears the g
   or, alternatively, if monitoring, end the connection
 
         qmgr.end();
+
+##WorkQueueBroker Javascript Usage Example
+
+1. Ensure you have a Redis server installed and running. For example, once installed, you can run it locally by
+
+        redis-server &
+
+2. Require `node-redis-queue` WorkQueueBroker
+
+        var WorkQueueBroker = require('node-redis-queue').WorkQueueBroker;
+
+3. Create a WorkQueueBroker instance and connect to Redis
+
+        var broker = new WorkQueueBroker();  
+        broker.connect(function () {
+          console.log('ready');
+          myMainLogic();
+        });
+
+  Alternatively, you can provide an existing Redis connection (i.e., a redis client instance)
+
+        broker.attach(redisConn);
+
+4. Create a work queue instance
+
+        var queue = broker.createQueue(queueName);
+
+5. Optionally, clear previous data from the queue, providing a callback
+   to handle the data.
+
+        queue.clear(queueName, function() {
+          console.log('cleared');
+          doImportantStuff();
+        });
+
+6. Optionally, send data to your queue
+
+        queue.send(queueName, myData);
+
+7. Optionally, handle error events
+
+        broker.on('error', function(error) {   
+            console.log('Stopping due to: ' + error);  
+            process.exit();
+        });
+
+8. Optionally, handle lost connection events
+
+        broker.on('end', function {   
+          console.log('Connection lost');
+        });
+
+9. Optionally, consume data from your queue and call ack when ready to consume another data item
+
+        queue.consume(function(myData, ack) {  
+            console.log('data = ' + myData);   
+            ...
+            ack();
+        });
+
+10. Optionally, destroy a work queue if no longer consuming from it and there are other queues being
+   consumed in the same process. Otherwise, not necessary.
+
+        broker.destroyQueue(queueName);
+
+11. When done, quit the WorkQueueBroker instance
+
+        broker.disconnect();
+
+  or, alternatively, if consuming data from the queue, end the connection
+
+        broker.end();
 
 ##Running grunt for development tasks
 
@@ -231,6 +382,8 @@ Corrected error in provision of Redis Cloud hostname;
 
 **v0.1.8**: Fix for REDISCLOUD_URL having no auth field; Created change log in README.md.
 
+**v0.1.9**: Added usage examples to README.md for WorkQueueBroker. Added commandQueueLength function 
+to permit some rudimentary control of backpressure. Documented 'drain' event.
 
 ##Note:
 

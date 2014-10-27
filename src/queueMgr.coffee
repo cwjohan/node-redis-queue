@@ -70,10 +70,7 @@ class QueueMgr extends events.EventEmitter
     @client.end()
     true
 
-  config: ->
-    @config
-
-  client: ->
-    @client
+  commandQueueLength: ->
+    @client.command_queue.length
 
 exports.qmgr = QueueMgr
