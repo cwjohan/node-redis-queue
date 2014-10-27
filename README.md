@@ -17,8 +17,8 @@ This is a very simple queing wrapper for Redis that is intended for communicatio
    The sending process uses a WorkQueue instance to send data to the corresponding queue via the `send` function. The receiving process uses
    a WorkQueue instance to remove data from the corresponding queue via the `consume` function, which delivers the data to a callback function
    which accepts a data parameter and an ack parameter. The latter is a function that is called to indicate that the callback function
-   is complete and is ready to accept some additional data, if any, in the queue. See the worker03 and worker04 files in the demo src
-   or lib directories for examples of how to do this.
+   is complete and is ready to accept some additional data, if any, in the queue. See the usage examples below and also
+   the worker03 and worker04 files in the demo src or lib directories for examples of how to do this.
 
 `consume` is different from `pop` in that a single call to `consume` can fetch
 multiple data items from the given queue, while `pop` must be called repeatedly to fetch items from the queue.
@@ -130,7 +130,7 @@ to detect when the length is too much, then use the `'drain'` event to resume se
 5. Optionally, clear previous data from the queue, providing a callback
    to handle the data.
 
-        queue.clear queueName, ->
+        queue.clear ->
           console.log 'cleared'   
           doImportantStuff()
 
@@ -191,7 +191,7 @@ to detect when the length is too much, then use the `'drain'` event to resume se
 
 4. Optionally, clear previous data from the queue, providing a callback.
 
-        qmgr.clear(qmgrName, function() {
+        qmgr.clear(function() {
           console.log('cleared');
           doImportantStuff();
         });
