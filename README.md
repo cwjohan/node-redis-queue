@@ -136,7 +136,7 @@ to detect when the length is too much, then use the `'drain'` event to resume se
 
 6. Optionally, send data to your queue
 
-        queue.send queueName, myData
+        queue.send myData
 
 7. Optionally, handle error events
 
@@ -264,7 +264,7 @@ to detect when the length is too much, then use the `'drain'` event to resume se
 
 6. Optionally, send data to your queue
 
-        queue.send(queueName, myData);
+        queue.send(myData);
 
 7. Optionally, handle error events
 
