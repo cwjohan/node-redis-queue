@@ -71,7 +71,7 @@ to detect when the length is too much, then use the `'drain'` event to resume se
 
 5. Optionally, push data to your queue
 
-        qmgr push.queueName, myData
+        qmgr.push queueName, myData
 
 6. Optionally, handle error events
 
@@ -198,7 +198,7 @@ to detect when the length is too much, then use the `'drain'` event to resume se
 
 5. Optionally, push data to your queue
 
-        qmgr.push(qmgrName, myData);
+        qmgr.push(queueName, myData);
 
 6. Optionally, handle error events
 
