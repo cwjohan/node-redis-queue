@@ -385,6 +385,8 @@ Corrected error in provision of Redis Cloud hostname;
 **v0.1.9**: Added usage examples to README.md for WorkQueueBroker. Added commandQueueLength function 
 to permit some rudimentary control of backpressure. Documented 'drain' event.
 
+**v0.1.10**: Changed `grunt test` to use mocha rather than jasmine-node.
+
 ##Note:
 
 Part of this work is derived from node-simple-redis-queue v0.9.3 by James Smith and
