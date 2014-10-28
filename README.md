@@ -47,11 +47,11 @@ to detect when the length is too much, then use the `'drain'` event to resume se
 
         redis-server &
 
-2. Require `node-redis-queue` QueueMgr
+1. Require `node-redis-queue` QueueMgr
 
         QueueMgr = require('node-redis-queue').QueueMgr
 
-3. Create a QueueMgr instance and connect to Redis
+1. Create a QueueMgr instance and connect to Redis
 
         qmgr = new QueueMgr()  
         qmgr.connect ->
@@ -62,39 +62,42 @@ to detect when the length is too much, then use the `'drain'` event to resume se
 
         qmgr.attach redisConn
 
-4. Optionally, clear previous data from the queue, providing a callback
+1. Optionally, handle error events
+
+        qmgr.on 'error', (error) ->  
+            console.log 'Stopping due to: ' + error  
+            process.exit()
+
+1. Optionally, handle lost connection events
+
+        qmgr.on 'end', ->
+          console.log 'Connection lost'
+
+1. Optionally, clear previous data from the queue, providing a callback
    to handle the data.
 
         qmgr.clear queueName, ->
           console.log 'cleared'
           doImportantStuff()
 
-5. Optionally, push data to your queue
+1. Optionally, push data to your queue
 
         qmgr.push queueName, myData
 
-6. Optionally, handle error events
-
-        qmgr.on 'error', (error) ->  
-            console.log 'Stopping due to: ' + error  
-            process.exit()
-
-7. Optionally, handle lost connection events
-
-        qmgr.on 'end', ->
-          console.log 'Connection lost'
-
-8. Optionally, pop data off your queue
+1. Optionally, pop data off your queue
 
         qmgr.pop queueName, (myData) ->  
             console.log 'data = ' + myData
 
-  or, alternatively, off multiple queues
+   or, alternatively, pop off any of multiple queues
 
         qmgr.popAny queueName1, queueName2, (myData) ->
             console.log 'data = ' + myData 
 
-9. When done, quit the QueueMgr instance
+   Once popping data from a queue, avoid pushing data to the same queue from the same connection, since
+   a hang could result. This appears to be a node-redis limitation when using blocking reads.
+
+1. When done, quit the QueueMgr instance
 
         qmgr.disconnect()
 
@@ -108,11 +111,11 @@ to detect when the length is too much, then use the `'drain'` event to resume se
 
         redis-server &
 
-2. Require `node-redis-queue` WorkQueueBroker
+1. Require `node-redis-queue` WorkQueueBroker
 
         WorkQueueBroker = require('node-redis-queue').WorkQueueBroker
 
-3. Create a WorkQueueBroker instance and connect to Redis
+1. Create a WorkQueueBroker instance and connect to Redis
 
         broker = new WorkQueueBroker()  
         broker.connect ->
@@ -123,45 +126,51 @@ to detect when the length is too much, then use the `'drain'` event to resume se
 
         broker.attach redisConn
 
-4. Create a work queue instance
+1. Optionally, handle error events
+
+        broker.on 'error', (error) ->  
+            console.log 'Stopping due to: ' + error  
+            process.exit()
+
+1. Optionally, handle lost connection events
+
+        broker.on 'end', ->
+          console.log 'Connection lost'
+
+1. Create a work queue instance
 
         queue = broker.createQueue queueName
 
-5. Optionally, clear previous data from the queue, providing a callback
+1. Optionally, clear previous data from the queue, providing a callback
    to handle the data.
 
         queue.clear ->
           console.log 'cleared'   
           doImportantStuff()
 
-6. Optionally, send data to your queue
+1. Optionally, send data to your queue
 
         queue.send myData
 
-7. Optionally, handle error events
-
-        broker.on 'error', (error) ->  
-            console.log 'Stopping due to: ' + error  
-            process.exit()
-
-8. Optionally, handle lost connection events
-
-        broker.on 'end', ->
-          console.log 'Connection lost'
-
-9. Optionally, consume data from your queue and call ack when ready to consume another data item
+1. Optionally, consume data from your queue and call ack when ready to consume another data item
 
         queue.consume (myData, ack) ->  
             console.log 'data = ' + myData   
             ...
             ack()
 
-10. Optionally, destroy a work queue if no longer consuming from it and there are other queues being
+   Note that ack(true) may be used to indicate that no further data is expected from the given work queue.
+   This is useful, for example, in testing, when a clean exit from a test case is desired.
+
+   Once consuming from a queue, avoid sending data to the same queue from the same connection, since
+   a hang could result. This appears to be a node-redis limitation when using blocking reads.
+
+1. Optionally, destroy a work queue if no longer consuming from it and there are other queues being
    consumed in the same process. Otherwise, not necessary.
 
         broker.destroyQueue queueName
 
-11. When done, quit the WorkQueueBroker instance
+1. When done, quit the WorkQueueBroker instance
 
         broker.disconnect()
 
@@ -176,12 +185,12 @@ to detect when the length is too much, then use the `'drain'` event to resume se
 
         redis-server &
 
-2. Require `node-redis-queue` QueueMgr
+1. Require `node-redis-queue` QueueMgr
 
         var QueueMgr = require('node-redis-queue').QueueMgr;
 
 
-3. Create a QueueMgr instance and connect to Redis
+1. Create a QueueMgr instance and connect to Redis
 
         var qmgr = new QueueMgr();  
         qmgr.connect(function() {
@@ -189,38 +198,47 @@ to detect when the length is too much, then use the `'drain'` event to resume se
           myMainLogic();
         });
 
-4. Optionally, clear previous data from the queue, providing a callback.
-
-        qmgr.clear(function() {
-          console.log('cleared');
-          doImportantStuff();
-        });
-
-5. Optionally, push data to your queue
-
-        qmgr.push(queueName, myData);
-
-6. Optionally, handle error events
+1. Optionally, handle error events
 
         qmgr.on('error', function(error) {  
             console.log('Stopping due to: ' + error);  
             process.exit();
         });
 
-7. Optionally, handle lost connection events
+1. Optionally, handle lost connection events
 
         qmgr.on('end', function() {
           console.log('Connection lost');
         });
 
-8. Optionally, pop data off your queue, providing a callback to
+1. Optionally, clear previous data from the queue, providing a callback.
+
+        qmgr.clear(function() {
+          console.log('cleared');
+          doImportantStuff();
+        });
+
+1. Optionally, push data to your queue
+
+        qmgr.push(queueName, myData);
+
+1. Optionally, pop data off your queue, providing a callback to
    handle the data
 
         qmgr.pop(queueName, function(myData) {  
             console.log('data = ' + myData); 
         });
 
-9. When done, quit the QueueMgr instance
+   or, alternatively, pop off any of multiple queues
+
+        qmgr.popAny(queueName1, queueName2, function(myData) {
+            console.log('data = ' + myData);
+        });
+
+   Once popping data from a queue, avoid pushing data to the same queue from the same connection, since
+   a hang could result. This appears to be a node-redis limitation when using blocking reads.
+
+1. When done, quit the QueueMgr instance
 
         qmgr.disconnect();
 
@@ -234,11 +252,11 @@ to detect when the length is too much, then use the `'drain'` event to resume se
 
         redis-server &
 
-2. Require `node-redis-queue` WorkQueueBroker
+1. Require `node-redis-queue` WorkQueueBroker
 
         var WorkQueueBroker = require('node-redis-queue').WorkQueueBroker;
 
-3. Create a WorkQueueBroker instance and connect to Redis
+1. Create a WorkQueueBroker instance and connect to Redis
 
         var broker = new WorkQueueBroker();  
         broker.connect(function () {
@@ -250,11 +268,24 @@ to detect when the length is too much, then use the `'drain'` event to resume se
 
         broker.attach(redisConn);
 
-4. Create a work queue instance
+1. Optionally, handle error events
+
+        broker.on('error', function(error) {   
+            console.log('Stopping due to: ' + error);  
+            process.exit();
+        });
+
+1. Optionally, handle lost connection events
+
+        broker.on('end', function {   
+          console.log('Connection lost');
+        });
+
+1. Create a work queue instance
 
         var queue = broker.createQueue(queueName);
 
-5. Optionally, clear previous data from the queue, providing a callback
+1. Optionally, clear previous data from the queue, providing a callback
    to handle the data.
 
         queue.clear(queueName, function() {
@@ -262,24 +293,11 @@ to detect when the length is too much, then use the `'drain'` event to resume se
           doImportantStuff();
         });
 
-6. Optionally, send data to your queue
+1. Optionally, send data to your queue
 
         queue.send(myData);
 
-7. Optionally, handle error events
-
-        broker.on('error', function(error) {   
-            console.log('Stopping due to: ' + error);  
-            process.exit();
-        });
-
-8. Optionally, handle lost connection events
-
-        broker.on('end', function {   
-          console.log('Connection lost');
-        });
-
-9. Optionally, consume data from your queue and call ack when ready to consume another data item
+1. Optionally, consume data from your queue and call ack when ready to consume another data item
 
         queue.consume(function(myData, ack) {  
             console.log('data = ' + myData);   
@@ -287,12 +305,18 @@ to detect when the length is too much, then use the `'drain'` event to resume se
             ack();
         });
 
-10. Optionally, destroy a work queue if no longer consuming from it and there are other queues being
+   Note that ack(true) may be used to indicate that no further data is expected from the given work queue.
+   This is useful, for example, in testing, when a clean exit from a test case is desired.
+
+   Once consuming from a queue, avoid sending data to the same queue from the same connection, since
+   a hang could result. This appears to be a node-redis limitation when using blocking reads.
+
+1. Optionally, destroy a work queue if no longer consuming from it and there are other queues being
    consumed in the same process. Otherwise, not necessary.
 
         broker.destroyQueue(queueName);
 
-11. When done, quit the WorkQueueBroker instance
+1. When done, quit the WorkQueueBroker instance
 
         broker.disconnect();
 
@@ -385,7 +409,7 @@ Corrected error in provision of Redis Cloud hostname;
 **v0.1.9**: Added usage examples to README.md for WorkQueueBroker. Added commandQueueLength function 
 to permit some rudimentary control of backpressure. Documented 'drain' event.
 
-**v0.1.10**: Changed `grunt test` to use mocha rather than jasmine-node.
+**v0.1.10**: Changed `grunt test` to use mocha rather than jasmine-node. Improved usage documentation.
 
 ##Note:
 
