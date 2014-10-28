@@ -336,7 +336,7 @@ corresponding lib directory.
 `grunt jshint` runs jshint on all the .js code except one in the demo/lib/helpers directory. Note that jshint has about
 ten complaints about the index.js code. The other generated code is clean.
 
-`grunt test` runs the suite of tests using Mocha. It looks .coffee files in the test directory.
+`grunt test` runs the suite of tests using Mocha. It looks for .coffee files in the test directory.
 
 `grunt bump` bumps the patch number up in the package.json file.
 
