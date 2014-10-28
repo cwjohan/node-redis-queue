@@ -65,10 +65,11 @@ module.exports = (grunt) ->
   grunt.registerTask 'test', 'Runs Jasmine tests', ->
     exec = require('child_process').exec
     done = this.async()
-    child = exec 'bash node_modules/.bin/jasmine-node --verbose lib',(error, stdout, stderr) ->
-      console.log(stdout)
-      console.log('Error running tests: ' + error) if error?
-      done(!error?)
+    child = exec 'bash node_modules/.bin/mocha -R spec --compilers coffee:coffee-script/register test',
+        (error, stdout, stderr) ->
+          console.log(stdout)
+          console.log('Error running tests: ' + error) if error?
+          done(!error?)
 
   # Task to tag a version in git
   grunt.registerTask 'git-tag', 'Tags a release in git', ->
