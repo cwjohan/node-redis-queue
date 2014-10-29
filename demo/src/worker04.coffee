@@ -15,8 +15,6 @@ Usage:
    cd demo/lib
    export NODE_PATH='../../..'
    node worker04.js
- or
-   node worker04.js mem verbose
 
 Use this app in conjunction with provider04.js. See the provider04 source code
 for more details.
@@ -26,23 +24,13 @@ request = require 'request'
 SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1
 urlQueueName = 'urlq'
 urlQueue = null
-verbose = process.argv[3] is 'verbose'
 
 myBroker = new WorkQueueBroker()
 myBroker.connect ->
-  checkArgs()
   initEventHandlers()
   createUrlQueue()
   consumeUrlQueue()
   console.log 'waiting for work...'
-
-checkArgs = ->
-  if process.argv[2] is 'mem'
-    memwatch = require 'memwatch'
-    memwatch.on 'stats', (d) ->
-      console.log '>>>current = ' + d.current_base + ', max = ' + d.max
-    memwatch.on 'leak', (d) ->
-      console.log '>>>LEAK = ', d
 
 initEventHandlers = ->
   myBroker.on 'end', () ->

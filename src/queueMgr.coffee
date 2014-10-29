@@ -70,6 +70,15 @@ class QueueMgr extends events.EventEmitter
     @client.end()
     true
 
+  shutdownSoon: (delay) ->
+    process.nextTick =>
+      if @client.offline_queue.length is 0
+        @client.end()
+      else
+        setTimeout =>
+          @shutdownSoon delay
+        , delay or 500
+
   commandQueueLength: ->
     @client.command_queue.length
 

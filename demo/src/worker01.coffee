@@ -12,8 +12,6 @@ Usage:
   cd demo/lib
   export NODE_PATH='../../..'
   node worker01.js
-or
-  node worker01.js mem verbose
 
 Use this app in conjunction with provider01.js. See the provider01 source code
 for more details.
@@ -23,22 +21,12 @@ request = require 'request'
 SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1
 urlQueueName = 'urlq'
 qmgr = null
-verbose = process.argv[3] is 'verbose'
 
 qmgr = new QueueMgr
 qmgr.connect ->
-  checkArgs()
   initEventHandlers()
   qmgr.pop urlQueueName, onData
   console.log 'Waiting for data...'
-
-checkArgs = ->
-  if process.argv[2] is 'mem'
-    memwatch = require 'memwatch'
-    memwatch.on 'stats', (d) ->
-      console.log '>>>current = ' + d.current_base + ', max = ' + d.max
-    memwatch.on 'leak', (d) ->
-      console.log '>>>LEAK = ', d
 
 initEventHandlers = ->
   qmgr.on 'end', () ->

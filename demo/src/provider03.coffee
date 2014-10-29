@@ -11,6 +11,7 @@ Usage:
   export NODE_PATH='../../..'
   node provider01.js clear
   node provider01.js
+  node provider01.js 10
   ...
   node provider01.js stop
 
@@ -35,6 +36,7 @@ itemCntQ2 = 0
 
 clear = process.argv[2] is 'clear'
 stop = process.argv[2] is 'stop'
+timesToRepeat = parseInt(process.argv[2]) or 1
 
 WorkQueueBroker = require('node-redis-queue').WorkQueueBroker
 
@@ -46,9 +48,8 @@ myBroker.connect () ->
   if stop
     sendStop()
     shutDown()
-  if clear
+  else if clear
     clearWorkQueues ->
-      sendData()
       shutDown()
   else
     sendData()
@@ -76,13 +77,14 @@ clearWorkQueues = (done) ->
     done() unless --queuesToClear
 
 sendData = ->
-  for item in expectedItemsQ1
-    console.log 'publishing "' + item + '" to queue "work-queue-1"'
-    myWorkQueue1.send item
+  while timesToRepeat--
+    for item in expectedItemsQ1
+      console.log 'publishing "' + item + '" to queue "work-queue-1"'
+      myWorkQueue1.send item
 
-  for item in expectedItemsQ2
-    console.log 'publishing "' + item + '" to queue "work-queue-2"'
-    myWorkQueue2.send item
+    for item in expectedItemsQ2
+      console.log 'publishing "' + item + '" to queue "work-queue-2"'
+      myWorkQueue2.send item
 
 sendStop = ->
   console.log 'stopping worker03'
@@ -90,6 +92,5 @@ sendStop = ->
   myWorkQueue2.send '***stop***'
 
 shutDown = ->
-  myBroker.end()
-  process.exit()
+  myBroker.shutdownSoon()
 

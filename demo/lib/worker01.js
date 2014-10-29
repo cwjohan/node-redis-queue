@@ -13,14 +13,12 @@ Usage:
   cd demo/lib
   export NODE_PATH='../../..'
   node worker01.js
-or
-  node worker01.js mem verbose
 
 Use this app in conjunction with provider01.js. See the provider01 source code
 for more details.
 */
 
-var QueueMgr, SHA1, checkArgs, initEventHandlers, onData, qmgr, request, shutDown, urlQueueName, verbose;
+var QueueMgr, SHA1, initEventHandlers, onData, qmgr, request, shutDown, urlQueueName;
 
 QueueMgr = require('node-redis-queue').QueueMgr;
 
@@ -32,29 +30,13 @@ urlQueueName = 'urlq';
 
 qmgr = null;
 
-verbose = process.argv[3] === 'verbose';
-
 qmgr = new QueueMgr;
 
 qmgr.connect(function() {
-  checkArgs();
   initEventHandlers();
   qmgr.pop(urlQueueName, onData);
   return console.log('Waiting for data...');
 });
-
-checkArgs = function() {
-  var memwatch;
-  if (process.argv[2] === 'mem') {
-    memwatch = require('memwatch');
-    memwatch.on('stats', function(d) {
-      return console.log('>>>current = ' + d.current_base + ', max = ' + d.max);
-    });
-    return memwatch.on('leak', function(d) {
-      return console.log('>>>LEAK = ', d);
-    });
-  }
-};
 
 initEventHandlers = function() {
   qmgr.on('end', function() {

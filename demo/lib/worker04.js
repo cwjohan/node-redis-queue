@@ -16,14 +16,12 @@ Usage:
    cd demo/lib
    export NODE_PATH='../../..'
    node worker04.js
- or
-   node worker04.js mem verbose
 
 Use this app in conjunction with provider04.js. See the provider04 source code
 for more details.
 */
 
-var SHA1, WorkQueueBroker, checkArgs, consumeUrlQueue, createUrlQueue, initEventHandlers, myBroker, request, shutDown, urlQueue, urlQueueName, verbose;
+var SHA1, WorkQueueBroker, consumeUrlQueue, createUrlQueue, initEventHandlers, myBroker, request, shutDown, urlQueue, urlQueueName;
 
 WorkQueueBroker = require('node-redis-queue').WorkQueueBroker;
 
@@ -35,30 +33,14 @@ urlQueueName = 'urlq';
 
 urlQueue = null;
 
-verbose = process.argv[3] === 'verbose';
-
 myBroker = new WorkQueueBroker();
 
 myBroker.connect(function() {
-  checkArgs();
   initEventHandlers();
   createUrlQueue();
   consumeUrlQueue();
   return console.log('waiting for work...');
 });
-
-checkArgs = function() {
-  var memwatch;
-  if (process.argv[2] === 'mem') {
-    memwatch = require('memwatch');
-    memwatch.on('stats', function(d) {
-      return console.log('>>>current = ' + d.current_base + ', max = ' + d.max);
-    });
-    return memwatch.on('leak', function(d) {
-      return console.log('>>>LEAK = ', d);
-    });
-  }
-};
 
 initEventHandlers = function() {
   myBroker.on('end', function() {

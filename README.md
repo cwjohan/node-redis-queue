@@ -95,7 +95,7 @@ to detect when the length is too much, then use the `'drain'` event to resume se
             console.log 'data = ' + myData 
 
    Once popping data from a queue, avoid pushing data to the same queue from the same connection, since
-   a hang could result. This appears to be a node-redis limitation when using blocking reads.
+   a hang could result. This appears to be a Redis limitation when using blocking reads.
 
 1. When done, quit the QueueMgr instance
 
@@ -104,6 +104,10 @@ to detect when the length is too much, then use the `'drain'` event to resume se
   or, alternatively, if consuming data from the queue, end the connection
 
         qmgr.end()
+
+  or, if there may be a number of redis commands queued,
+
+        qmgr.shutdownSoon()
 
 ###WorkQueueBroker Coffeescript Usage Example
 
@@ -163,7 +167,7 @@ to detect when the length is too much, then use the `'drain'` event to resume se
    This is useful, for example, in testing, when a clean exit from a test case is desired.
 
    Once consuming from a queue, avoid sending data to the same queue from the same connection, since
-   a hang could result. This appears to be a node-redis limitation when using blocking reads.
+   a hang could result. This appears to be a Redis limitation when using blocking reads.
 
 1. Optionally, destroy a work queue if no longer consuming from it and there are other queues being
    consumed in the same process. Otherwise, not necessary.
@@ -178,6 +182,9 @@ to detect when the length is too much, then use the `'drain'` event to resume se
 
         broker.end()
 
+  or, if there may be a number of redis commands queued,
+
+        broker.shutdownSoon()
 
 ###QueueMgr Javascript Usage Example
 
@@ -236,7 +243,7 @@ to detect when the length is too much, then use the `'drain'` event to resume se
         });
 
    Once popping data from a queue, avoid pushing data to the same queue from the same connection, since
-   a hang could result. This appears to be a node-redis limitation when using blocking reads.
+   a hang could result. This appears to be a Redis limitation when using blocking reads.
 
 1. When done, quit the QueueMgr instance
 
@@ -245,6 +252,10 @@ to detect when the length is too much, then use the `'drain'` event to resume se
   or, alternatively, if monitoring, end the connection
 
         qmgr.end();
+
+  or, if there may be a number of redis commands queued,
+
+        qmgr.shutdownSoon();
 
 ##WorkQueueBroker Javascript Usage Example
 
@@ -309,7 +320,7 @@ to detect when the length is too much, then use the `'drain'` event to resume se
    This is useful, for example, in testing, when a clean exit from a test case is desired.
 
    Once consuming from a queue, avoid sending data to the same queue from the same connection, since
-   a hang could result. This appears to be a node-redis limitation when using blocking reads.
+   a hang could result. This appears to be a Redis limitation when using blocking reads.
 
 1. Optionally, destroy a work queue if no longer consuming from it and there are other queues being
    consumed in the same process. Otherwise, not necessary.
@@ -323,6 +334,80 @@ to detect when the length is too much, then use the `'drain'` event to resume se
   or, alternatively, if consuming data from the queue, end the connection
 
         broker.end();
+
+  or, if there may be a number of redis commands queued,
+
+        qmgr.shutdownSoon();
+
+##Running the demos -- preliminary steps
+
+1. Open two Git Bash console windows.
+1. In each window run `cd demo/lib` and then `export NODE_PATH=../../..`.
+1. If redis-server is not already running, open an additional console window and run `redis-server` or `redis-server &` to start the Redis server in the background. The demos assume default login, no password.
+
+##Running demo 01 -- QueueMgr example
+
+This demo shows how to send a series of URLs to a consumer process that computes an SHA1 value for each URL.
+
+1. In the first console window Run `node work01.js`. It will wait for some data to appear in the queue.
+1. In the second console window, run `node provider01.js`, which will place four URLs in the queue. Shortly
+   thereafter, the worker01 process will pick up the four URLs and display them, fetch a page body for each, and compute an SHA1 value for each.
+1. Repeat step 2 a few times.
+1. In the second console window, run `node provider01.js stop`, which will put a stop command in the queue. Shortly
+   thereafter, the worker01 process will stop.
+
+##Running demo 02 -- QueueMgr example
+
+This demo shows how to send a series of URLs to a consumer process that computes an SHA1 value for each URL and returns the SHA1 result to the provider process.
+
+1. In the first console window Run `node work02.js`. It will wait for some data to appear in the queue.
+1. In the second console window, run `node provider02.js 01`, which will place four URLs in the queue. Shortly
+   thereafter, the worker02 process will pick up the four URLs, display them, fetch a page body for each, and compute an SHA1 value for each, and then return the SHA1 result to the provider02 instance, which will display the result.
+1. Repeat step 2 a few times.
+1. In the second console window, run `node provider02.js stop`, which will put a stop command in the queue. Shortly
+   thereafter, the worker02 process will stop.
+
+##Running demo 03 -- WorkQueueBroker example
+
+This demo shows how a worker can service multiple queues using WorkQueueBroker. The provider process, by default, sends three strings to one queue and three strings to the other.
+
+1. In the first console window Run `node work03.js`. It will wait for some data to appear in the queue.
+1. In the second console window, run `node provider03.js`, which will place three strings in each queue. Shortly
+   thereafter, the worker03 process will pick up the six strings from their respective queues and display them.
+1. Repeat step 2 a few times.
+1. In the second console window, run `node provider03.js stop`, which will put a stop command in the queue. Shortly
+   thereafter, the worker03 process will stop.
+
+Note that, when running worker03, one optionally may use a 'mem' parameter to monitor memory usage. For example:
+
+`node worker03.js mem | grep '>>>'`
+
+When monitoring memory usage, run `node provider03.js 400` repeatedly, say as many as 50 times, to pump a sufficient amount of data to worker03 to detect any leaks. Sample memory usage output:
+
+        >>>current = 3118200, max = 0
+        >>>current = 3248152, max = 0
+        >>>current = 3265896, max = 3265896
+        >>>current = 3214184, max = 3265896
+        >>>current = 3469112, max = 3469112
+        >>>current = 3474064, max = 3474064
+        >>>current = 3466856, max = 3474064
+        >>>current = 3471904, max = 3474064
+        >>>current = 3470080, max = 3474064
+
+##Running demo 04 -- WorkQueueBroker example
+
+This demo is almost the same as demo 02 but uses WorkQueueBroker rather than QueueMgr. It shows how to send a series of URLs to a consumer process that computes an SHA1 value for each URL and returns the SHA1 result to the provider process.
+
+1. In the first console window Run `node work04.js`. It will wait for some data to appear in the queue.
+1. In the second console window, run `node provider04.js 01`, which will place four URLs in the queue. Shortly
+   thereafter, the worker04 process will pick up the four URLs, display them, fetch a page body for each, and compute an SHA1 value for each, and then return the SHA1 result to the provider04 instance, which will display the result.
+1. Repeat step 2 a few times.
+1. In the second console window, run `node provider04.js stop`, which will put a stop command in the queue. Shortly
+   thereafter, the worker04 process will stop.
+
+##Running the test suite
+
+Use either `grunt test` or `npm test` to run the suite of tests using Mocha. The test cases reside in the `test` directory.
 
 ##Running grunt for development tasks
 
@@ -345,38 +430,6 @@ ten complaints about the index.js code. The other generated code is clean.
 `grunt release` runs coffee on all the .coffee source code in the src directory, converting it to .js code, and
 then runs the git-tag task to commit the latest staged code changes and tag the code with the version obtained from the
 package.json file.
-
-##Running the Jasmine tests using npm
-
-`npm test` runs the suite of tests using jasmine-node.
-
-##Running the demo 01 code
-
-1. Open three Git Bash console windows.
-2. In the first console window, run `redis-server` or `redis-server &` to start the Redis server in the background.
-3. cd demo/lib
-4. In the second console window Run `node work01.js`. It will wait for some data to appear in the queue.
-5. In the third console window, run `node provider01.js`, which will place four URLs in the queue. Shortly
-   thereafter, the worker01 process will pick up the four URLs and display them, fetch a page body for each, and compute an SHA1 value for each.
-6. Repeat step 5 a few times.
-7. In the third console window, run `node provider01.js stop`, which will put a stop command in the queue. Shortly
-   thereafter, the worker01 process will stop.
-
-Note that, when running worker01, one optionally may use a 'mem' parameter to monitor memory usage. For example:
-
-`node worker01.js mem | grep '>>>' | tee memusage.out`
-
-##Running the demo 02 code
-
-The code now is available. Consult the first few lines of the demo src example files for instructions on how to run the demo.
-
-##Running the demo 03 code
-
-The code now is available. Consult the first few lines of the demo src example files for instructions on how to run the demo.
-
-##Running the demo 04 code
-
-The code now is available. Consult the first few lines of the demo src example files for instructions on how to run the demo.
 
 ##Change Log
 

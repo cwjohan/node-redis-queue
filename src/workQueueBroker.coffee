@@ -87,6 +87,9 @@ class WorkQueueBroker extends events.EventEmitter
     @qmgr.end()
     return true
 
+  shutdownSoon: ->
+    @qmgr.shutdownSoon()
+
   isValidQueueName: (queueName) ->
     return true if @queues[queueName]
     throw new WorkQueueBrokerError('Unknown queue "' + queueName + '"')

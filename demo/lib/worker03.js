@@ -12,11 +12,14 @@ Usage:
   export NODE_PATH='../../..'
   node worker03.js
 
+ or, to monitor for memory leaks
+  node worker03.js mem | grep '>>>'
+
 Use this program in conjunction with provider03. See provider03 source code
 for more details.
 */
 
-var WorkQueueBroker, consumeData, createWorkQueues, initEventHandlers, myBroker, myWorkQueue1, myWorkQueue2, queuesActive, shutDown;
+var WorkQueueBroker, checkArgs, consumeData, createWorkQueues, initEventHandlers, myBroker, myWorkQueue1, myWorkQueue2, queuesActive, shutDown;
 
 myWorkQueue1 = null;
 
@@ -32,11 +35,26 @@ myBroker = new WorkQueueBroker();
 
 myBroker.connect(function() {
   console.log('work queue broker ready');
+  checkArgs();
   initEventHandlers();
   createWorkQueues();
   consumeData();
   return console.log('waiting for data...');
 });
+
+checkArgs = function() {
+  var memwatch;
+  if (process.argv[2] === 'mem') {
+    console.log('monitoring for memory leaks');
+    memwatch = require('memwatch');
+    memwatch.on('stats', function(d) {
+      return console.log('>>>current = ' + d.current_base + ', max = ' + d.max);
+    });
+    return memwatch.on('leak', function(d) {
+      return console.log('>>>LEAK = ', d);
+    });
+  }
+};
 
 initEventHandlers = function() {
   myBroker.on('error', function(error) {
