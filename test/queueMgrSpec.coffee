@@ -1,8 +1,8 @@
 'use strict'
 QueueMgr = require('..').QueueMgr
 qmgr = null
-queueName1 = 'test-queue-1'
-queueName2 = 'test-queue-2'
+queueName1 = 'test:queue-1'
+queueName2 = 'test:queue-2'
 expect = (require 'chai').expect
 verbose = process.env.VERBOSE
 

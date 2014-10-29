@@ -1,8 +1,8 @@
 'use strict'
 myWorkQueue1 = null
 myWorkQueue2 = null
-workQueue1Name = 'work-queue-1'
-workQueue2Name = 'work-queue-2'
+workQueue1Name = 'test:work-queue-1'
+workQueue2Name = 'test:work-queue-2'
 myBroker = null
 expectedItemsQ1 = [
     'item one',
