@@ -464,6 +464,9 @@ to permit some rudimentary control of backpressure. Documented 'drain' event.
 
 **v0.1.10**: Changed `grunt test` to use mocha rather than jasmine-node. Improved usage documentation.
 
+**v0.1.11**: Added shutdownSoon function to QueueMgr and WorkQueueBroker. Improved README.md and demos. Made test suite
+use unique queue names to prevent interference from demos.
+
 ##Note:
 
 Part of this work is derived from node-simple-redis-queue v0.9.3 by James Smith and
