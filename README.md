@@ -439,20 +439,17 @@ package.json file.
 
 **v0.0.0**: Initial version.
 
-**v0.0.1-3**: Changes to README.md.
+**v0.0.1-3**: Changes to README.md. Implementation of jasmine-node tests.
 
-**v0.1.2**: Refactored to implement new QueueMgr and WorkQueueBroker interfaces;   
-Implementation of connection strategies. 
+**v0.1.2**: Refactored to implement new QueueMgr and WorkQueueBroker interfaces; Implementation of connection strategies. 
 
 **v0.1.3**: Further Refactoring to implement new QueueMgr and WorkQueueBroker interfaces;   
 Merged v0.1.3 from flex branch into master.
 
-**v0.1.4**: Implementation of jasmine-node tests.   
+**v0.1.4**: Fix for issue #1 - Where to find redis-queue-config file is too restrictive - Now uses QUEUE_CONFIG_FILE environment variable to find the config file;   
+An alternative is to specify the config file path in the queueMgr or workQueueBroker constructor.
 Changed testing from Jasmine to Mocha.; Implemented Mocha tests;      
-Introduced interleaved tests.;   
-Fix for issue #1 - Where to find redis-queue-config file is too restrictive -   
-Now uses QUEUE_CONFIG_FILE environment variable to find the config file;   
-An alternative is to specify the config file path in the queueMgr or workQueueBroker constructor.  
+Introduced interleaved tests.
 
 **v0.1.5**: Various comment and README.md changes;   
 Corrected error in provision of Redis Cloud hostname;
