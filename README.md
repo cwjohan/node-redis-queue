@@ -472,7 +472,7 @@ to permit some rudimentary control of backpressure. Documented 'drain' event.
 use unique queue names to prevent interference from demos.
 
 **v0.1.12**: Modified WorkQueueMgr to preserve the order of
-queue names used when calling popAny. ECMA-262 does not specify enumeration order, so an array should be used. Reference:   
+queue names used when calling popAny. ECMA-262 5.1 (15.2.3.14 Object.keys and 12.6.4 The for-in Statement) does not specify enumeration order, so an array should be used. Also, see:   
 https://code.google.com/p/v8/issues/detail?id=164
 
 ##Note:
