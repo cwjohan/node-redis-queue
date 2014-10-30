@@ -259,7 +259,7 @@ to detect when the length is too much, then use the `'drain'` event to resume se
 
         qmgr.shutdownSoon();
 
-##WorkQueueBroker Javascript Usage Example
+###WorkQueueBroker Javascript Usage Example
 
 1. Ensure you have a Redis server installed and running. For example, once installed, you can run it locally by
 
