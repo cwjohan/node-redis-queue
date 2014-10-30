@@ -163,6 +163,8 @@ to detect when the length is too much, then use the `'drain'` event to resume se
             ...
             ack()
 
+   If multiple queues are being consumed, they are consumed with highest priority given to the queues consumed first (i.e., in the order in which the consume statements are executed).
+
    Note that ack(true) may be used to indicate that no further data is expected from the given work queue.
    This is useful, for example, in testing, when a clean exit from a test case is desired.
 
@@ -316,6 +318,8 @@ to detect when the length is too much, then use the `'drain'` event to resume se
             ack();
         });
 
+   If multiple queues are being consumed, they are consumed with highest priority given to the queues consumed first (i.e., in the order in which the consume statements are executed).
+
    Note that ack(true) may be used to indicate that no further data is expected from the given work queue.
    This is useful, for example, in testing, when a clean exit from a test case is desired.
 
@@ -466,6 +470,10 @@ to permit some rudimentary control of backpressure. Documented 'drain' event.
 
 **v0.1.11**: Added shutdownSoon function to QueueMgr and WorkQueueBroker. Improved README.md and demos. Made test suite
 use unique queue names to prevent interference from demos.
+
+**v0.1.12**: Modified WorkQueueMgr to preserve the order of
+queue names used when calling popAny. ECMA-262 does not specify enumeration order, so an array should be used. Reference:   
+https://code.google.com/p/v8/issues/detail?id=164
 
 ##Note:
 

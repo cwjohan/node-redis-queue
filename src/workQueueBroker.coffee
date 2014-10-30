@@ -24,7 +24,8 @@ class WorkQueueBrokerError extends Error
 class WorkQueueBroker extends events.EventEmitter
   constructor: (configFilePath) ->
     @queues = {}
-    @consuming = {}
+    @consumingCB = {}
+    @consumingNames = []
     @qmgr = new QueueMgr(configFilePath)
     return this
 
@@ -56,27 +57,30 @@ class WorkQueueBroker extends events.EventEmitter
     return this
 
   consume: (queueName, onData) ->
-    @consuming[queueName] = onData
+    @consumingNames.push queueName unless @consumingCB[queueName]
+    @consumingCB[queueName] = onData
     process.nextTick @monitor_.bind(this)
     return this
 
   ack_: (queueName, cancel) ->
     if cancel
-      delete @consuming[queueName]
+      @destroyQueue queueName
     else
       @monitor_()
     return this
 
   monitor_: () ->
-    args = Object.keys(@consuming)
-    args.push (queueName, data) =>
-      @consuming[queueName] data, @ack_.bind(this, queueName) if @consuming[queueName]
+    (args = @consumingNames.slice()).push (queueName, data) =>
+      @consumingCB[queueName] data, @ack_.bind(this, queueName) if @consumingCB[queueName]
     @qmgr.popAny.apply @qmgr, args
 
   destroyQueue: (queueName) ->
-    if @isValidQueueName queueName
-      delete @consuming[queueName]
-      delete @queues[queueName]
+    @consumingNames = @consumingNames.reduce (acc,x) ->
+      acc.push x unless x is queueName
+      return acc
+    , []
+    delete @consumingCB[queueName]
+    delete @queues[queueName]
     return this
 
   disconnect: ->
