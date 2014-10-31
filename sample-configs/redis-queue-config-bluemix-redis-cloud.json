@@ -1,9 +1,10 @@
 {
-  "verbose": false,
+  "verbose": true,
   "redis_provider": {
     "type": "BlueMixRedisCloud"
   },
   "redis_options": {
+    "redis_version": "redis-2.6",
     "retry_max_delay": 2000
   }
 }
