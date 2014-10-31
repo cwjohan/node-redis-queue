@@ -39,6 +39,31 @@ to detect when the length is too much, then use the `'drain'` event to resume se
 
     npm install node-redis-queue --save
 
+##Configuration
+
+Sample configuration files may be found in the sample-configs directory. In each config file,
+the redis_provider type setting specifies the strategy to use. The verbose setting, if true, specifies to
+display the config file settings on startup.
+
+The environment variable QUEUE_CONFIG_FILE specifies which config file is to be used.
+If not set, it defaults to node-redis-queue/redis-queue-config.json, which specifies to use
+the local Redis server with no password. If you do nothing, that is what you get.
+
+Currently implemented strategies are:
+
+* **connStrategyDefaultLocal** -- local Redis server, no password
+
+* **connStrategyCustom** -- configurable host, port, and password; defaults to local Redis server, no password
+
+* **connStrategyHerokuRedisCloud** -- host, port, and password specified by REDISCLOUD_URL environment variable; if not
+   set, then defaults to local Redis server, no password
+
+* **connStrategyBlueMixRedisCloud** -- host, port, and password specified by VCAP_SERVICES environment variable; if not
+   set, then defaults to local Redis server, no password
+
+redisQueueConfig determines which strategy is used to configure the client.
+It is easy to add your own strategy.
+
 ##Usage
 
 ###QueueMgr Coffescript Usage Example
@@ -471,6 +496,8 @@ use unique queue names to prevent interference from demos.
 **v0.1.12**: Modified WorkQueueMgr to preserve the order of
 queue names used when calling popAny. ECMA-262 5.1 (15.2.3.14 Object.keys and 12.6.4 The for-in Statement) does not specify enumeration order, so an array should be used. Also, see:   
 https://code.google.com/p/v8/issues/detail?id=164
+
+**v0.1.13**: Modified connStrategyBlueMixRedisCloud to use a configured redis version. Added config info to README.md.
 
 ##Note:
 

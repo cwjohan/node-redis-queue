@@ -1,6 +1,6 @@
 {
     "name": "node-redis-queue",
-    "version": "0.1.12",
+    "version": "0.1.13",
     "description": "A simple, lightweight queue using Redis lpush and brpop",
     "main": "lib/index.js",
     "repository": {
