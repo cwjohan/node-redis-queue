@@ -30,9 +30,9 @@ clearInitially = process.argv[2] === 'clear';
 
 stopWorker = process.argv[2] === 'stop';
 
-urls = ['http://www.google.com', 'http://www.yahoo.com', 'http://ourfamilystory.com', 'http://ourfamilystory.com/pnuke'];
+urls = ['http://www.google.com', 'http://www.yahoo.com', 'http://www.google.com/robots.txt', 'https://code.google.com'];
 
-qmgr = new QueueMgr;
+qmgr = new QueueMgr();
 
 qmgr.connect(function() {
   console.log('connected');

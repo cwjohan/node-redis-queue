@@ -54,6 +54,7 @@ createWorkQueues = ->
   myWorkQueue1 = myBroker.createQueue 'work-queue-1'
   myWorkQueue2 = myBroker.createQueue 'work-queue-2'
   queuesActive = 2
+  return
 
 consumeData = ->
   console.log 'consuming queue "work-queue-1"'

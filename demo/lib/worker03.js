@@ -70,7 +70,7 @@ initEventHandlers = function() {
 createWorkQueues = function() {
   myWorkQueue1 = myBroker.createQueue('work-queue-1');
   myWorkQueue2 = myBroker.createQueue('work-queue-2');
-  return queuesActive = 2;
+  queuesActive = 2;
 };
 
 consumeData = function() {

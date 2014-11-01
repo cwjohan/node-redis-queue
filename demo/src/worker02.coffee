@@ -22,7 +22,7 @@ request = require 'request'
 SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1
 urlQueueName = 'urlq'
 
-qmgr = new QueueMgr
+qmgr = new QueueMgr()
 qmgr.connect ->
   initEventHandlers()
   qmgr.pop urlQueueName, onData

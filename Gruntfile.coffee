@@ -1,3 +1,5 @@
+exec = require('child_process').exec
+
 module.exports = (grunt) ->
   # Configuration
   grunt.initConfig
@@ -34,8 +36,10 @@ module.exports = (grunt) ->
           value: 11
         space_operators:
           level: 'error'
+        camelcase:
+          level: 'warn'
         camel_case_classes:
-          level: 'error'
+          level: 'warn'
         max_line_length:
           level: 'warn'
           value: 120
@@ -63,23 +67,29 @@ module.exports = (grunt) ->
 
   # Task to run the test suite using jasmine-node.
   grunt.registerTask 'test', 'Runs Jasmine tests', ->
-    exec = require('child_process').exec
     done = this.async()
-    child = exec 'bash node_modules/.bin/mocha -R spec --compilers coffee:coffee-script/register test',
+    exec 'bash ./node_modules/.bin/mocha -R spec --compilers coffee:coffee-script/register test',
         (error, stdout, stderr) ->
-          console.log(stdout)
-          console.log('Error running tests: ' + error) if error?
-          done(!error?)
+          console.log stdout
+          console.log 'Error running tests: ' + error if error?
+          done !error?
 
   # Task to tag a version in git
   grunt.registerTask 'git-tag', 'Tags a release in git', ->
-    exec = require('child_process').exec
     done = this.async()
     releaseVersion = grunt.template.process("<%= pkg.version %>")
 
-    child = exec "git commit -am 'v#{releaseVersion}' && git tag v#{releaseVersion}", (error, stdout, stderr) ->
-      console.log('Error running git tag: ' + error) if error?
-      done(!error?)
+    exec "git commit -am 'v#{releaseVersion}' && git tag v#{releaseVersion}", (error, stdout, stderr) ->
+      console.log 'Error running git tag: ' + error if error?
+      done !error?
+
+  # Task to remove vim backup files
+  grunt.registerTask 'clean', 'Runs cleaning script', ->
+    done = this.async()
+    exec 'bash ./script/clean', (error, stdout, stderr) ->
+      console.log stdout
+      console.log 'Error: ' + error if error?
+      done !error?
 
   # Release meta-task
   grunt.registerTask 'release', ['coffee', 'git-tag']

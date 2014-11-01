@@ -66,6 +66,7 @@ initEventHandlers = ->
 createWorkQueues = ->
   myWorkQueue1 = myBroker.createQueue 'work-queue-1'
   myWorkQueue2 = myBroker.createQueue 'work-queue-2'
+  return
 
 clearWorkQueues = (done) ->
   queuesToClear = 2
@@ -85,6 +86,7 @@ sendData = ->
     for item in expectedItemsQ2
       console.log 'publishing "' + item + '" to queue "work-queue-2"'
       myWorkQueue2.send item
+  return
 
 sendStop = ->
   console.log 'stopping worker03'

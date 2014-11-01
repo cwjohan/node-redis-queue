@@ -54,7 +54,7 @@ initEventHandlers = function() {
 };
 
 createUrlQueue = function() {
-  return urlQueue = myBroker.createQueue(urlQueueName);
+  urlQueue = myBroker.createQueue(urlQueueName);
 };
 
 consumeUrlQueue = function() {

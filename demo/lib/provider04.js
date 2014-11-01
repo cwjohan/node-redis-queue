@@ -54,7 +54,7 @@ clearInitially = process.argv[3] === 'clear';
 
 stopWorker = process.argv[2] === 'stop';
 
-urls = ['http://www.google.com', 'http://www.yahoo.com', 'http://ourfamilystory.com', 'http://ourfamilystory.com/pnuke'];
+urls = ['http://www.google.com', 'http://www.yahoo.com', 'http://www.google.com/robots.txt', 'https://code.google.com'];
 
 resultsExpected = 0;
 
@@ -87,7 +87,7 @@ initEventHandlers = function() {
 
 createWorkQueues = function() {
   urlQueue = myBroker.createQueue(urlQueueName);
-  return resultQueue = myBroker.createQueue(resultQueueName);
+  resultQueue = myBroker.createQueue(resultQueueName);
 };
 
 clearQueues = function() {

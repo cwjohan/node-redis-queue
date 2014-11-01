@@ -76,7 +76,7 @@ initEventHandlers = function() {
 
 createWorkQueues = function() {
   myWorkQueue1 = myBroker.createQueue('work-queue-1');
-  return myWorkQueue2 = myBroker.createQueue('work-queue-2');
+  myWorkQueue2 = myBroker.createQueue('work-queue-2');
 };
 
 clearWorkQueues = function(done) {
@@ -97,26 +97,19 @@ clearWorkQueues = function(done) {
 };
 
 sendData = function() {
-  var item, _i, _len, _results;
-  _results = [];
+  var item, _i, _j, _len, _len1;
   while (timesToRepeat--) {
     for (_i = 0, _len = expectedItemsQ1.length; _i < _len; _i++) {
       item = expectedItemsQ1[_i];
       console.log('publishing "' + item + '" to queue "work-queue-1"');
       myWorkQueue1.send(item);
     }
-    _results.push((function() {
-      var _j, _len1, _results1;
-      _results1 = [];
-      for (_j = 0, _len1 = expectedItemsQ2.length; _j < _len1; _j++) {
-        item = expectedItemsQ2[_j];
-        console.log('publishing "' + item + '" to queue "work-queue-2"');
-        _results1.push(myWorkQueue2.send(item));
-      }
-      return _results1;
-    })());
+    for (_j = 0, _len1 = expectedItemsQ2.length; _j < _len1; _j++) {
+      item = expectedItemsQ2[_j];
+      console.log('publishing "' + item + '" to queue "work-queue-2"');
+      myWorkQueue2.send(item);
+    }
   }
-  return _results;
 };
 
 sendStop = function() {
