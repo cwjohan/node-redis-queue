@@ -501,6 +501,9 @@ https://code.google.com/p/v8/issues/detail?id=164
 
 **v0.1.13**: Modified connStrategyBlueMixRedisCloud to use a configured redis version. Added config info to README.md.
 
+**v0.1.14**: Added 'clean' task to Gruntfile. Fixed some potential problems found by jshint. Tidied Gruntfile.
+Replaced some URLs in the demo source that were no longer working (404 not found).
+
 ##Note:
 
 Part of this work is derived from node-simple-redis-queue v0.9.3 by James Smith and
