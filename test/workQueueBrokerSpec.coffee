@@ -81,19 +81,7 @@ describe '===WorkQueueBroker send/consume===', ->
       done() unless --itemsInQueues
       ack itemCntQ2 >= expectedItemsQ2.length
 
-  it 'throws error if queue no longer exists', ->
-    # The following throw errors because ack(true) above destroyed the queues.
-    expect( () ->
-      myWorkQueue1.send 'foo'
-    ).to.throw('Unknown queue "' + workQueue1Name + '"')
-    expect( () ->
-      myWorkQueue1.consume -> return
-    ).to.throw('Unknown queue "' + workQueue1Name + '"')
-
   it 'receives all published data from given queues (interleaving)', (done) ->
-    # We have to create the queues again because ack(true) above destroyed them.
-    myWorkQueue1 = myBroker.createQueue workQueue1Name
-    myWorkQueue2 = myBroker.createQueue workQueue2Name
     itemsInQueues = 0
 
     for i in [0..Math.max(expectedItemsQ1.length, expectedItemsQ2.length)]
@@ -155,6 +143,15 @@ describe '===WorkQueueBroker send/consume===', ->
             console.log '>>>ack Q2 timeout'
           ack itemCntQ2 >= expectedItemsQ2.length
         ,10
+
+  it 'send/consume throw error if queue no longer exists', ->
+    myWorkQueue1.destroy()
+    expect( () ->
+      myWorkQueue1.send 'foo'
+    ).to.throw('Unknown queue "' + workQueue1Name + '"')
+    expect( () ->
+      myWorkQueue1.consume -> return
+    ).to.throw('Unknown queue "' + workQueue1Name + '"')
 
   it 'quits Redis cleanly', ->
     # We don't need to call process exit because the process will quit if no outstanding i/o.

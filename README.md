@@ -196,10 +196,10 @@ It is easy to add your own strategy.
    Once consuming from a queue, avoid sending data to the same queue from the same connection, since
    a hang could result. This appears to be a Redis limitation when using blocking reads.
 
-1. Optionally, destroy a work queue if no longer consuming from it and there are other queues being
-   consumed in the same process. Otherwise, not necessary.
+1. Optionally, destroy a work queue if it no longer is needed. Assign null to the queue variable to free up memory.
 
-        broker.destroyQueue queueName
+        queue.destroy()
+        queue = null
 
 1. When done, quit the WorkQueueBroker instance
 
@@ -351,10 +351,10 @@ It is easy to add your own strategy.
    Once consuming from a queue, avoid sending data to the same queue from the same connection, since
    a hang could result. This appears to be a Redis limitation when using blocking reads.
 
-1. Optionally, destroy a work queue if no longer consuming from it and there are other queues being
-   consumed in the same process. Otherwise, not necessary.
+1. Optionally, destroy a work queue if it no longer is needed. Assign null to the queue variable to free up memory.
 
-        broker.destroyQueue(queueName);
+        queue.destroy();
+        queue = null;
 
 1. When done, quit the WorkQueueBroker instance
 
@@ -511,7 +511,26 @@ incorrect calls to isValidQueueName. Added tests for WorkQueue
 exceptions. Grunt now uses grunt-mocha-test plugin for better
 reporting.
 
-##Note:
+**v0.1.16**: Reverted WorkQueue behaviour back to previous version since v0.1.15 change was too restrictive.
+Added destroy function to WorkQueue. Updated README.md with info about the new destroy function. Also, added
+some architecture notes.
+
+##Architecture Notes
+
+The QueueMgr class is a very thin wrapper around existing redis module functions. It delegates all its
+operations to that module. The WorkQueue class uses different strategies to connect to redis.
+A config file specifies which strategy to use and also supplies options to redis.
+
+The WorkQueueBroker class delegates queue send and consume to the QueueMgr class. It maintains a hash of queues created
+(@queue), which defines which queues currently are valid. For each queue that is consuming data, it maintains an entry
+in a hash of callbacks (@consumingCB) and and an entry in an ordered list of names of queues currently being consumed
+(@consumingNames). The ordered list of names represents the priority for consumption of queue data and is used by the
+consume function as the list of keys to be monitored by qmgr.popAny.
+
+The WorkQueue class is a very simple envelope wrapping four applicative functions, effectively delegating
+all operations to WorkQueueBroker class.
+
+##Historical Note
 
 Part of this work is derived from node-simple-redis-queue v0.9.3 by James Smith and
 retains the same license. However, the current version bears almost no resemblance

@@ -4,19 +4,23 @@ events = require 'events'
 QueueMgr = require('..').QueueMgr
 
 class WorkQueue
-  constructor: (@qmgr, @queueName, @options, @send_, @consume_) ->
+  constructor: (@queueName, @send_, @consume_, @clear, @destroy_) ->
     return this
 
   send: (data) ->
-    @send_ @queueName, data
+    @send_ data
     return this
 
   consume: (onData) ->
-    @consume_ @queueName, onData
+    @consume_ onData
     return this
 
   clear: (onClearComplete) ->
-    @qmgr.clear @queueName, onClearComplete
+    @clear_ onClearComplete
+    return this
+
+  destroy: ->
+    @destroy_()
     return this
 
 class WorkQueueBrokerError extends Error
@@ -49,7 +53,11 @@ class WorkQueueBroker extends events.EventEmitter
       @emit 'end'
     
   createQueue: (queueName, options) ->
-    return @queues[queueName] = new WorkQueue @qmgr, queueName, options, @send.bind(this), @consume.bind(this)
+    return @queues[queueName] = new WorkQueue queueName,
+                                  @send.bind(this, queueName),
+                                  @consume.bind(this, queueName),
+                                  @qmgr.clear.bind(@qmgr, queueName),
+                                  @destroyQueue.bind(this, queueName)
 
   send: (queueName, data) ->
     @ensureValidQueueName queueName
@@ -65,7 +73,7 @@ class WorkQueueBroker extends events.EventEmitter
 
   ack_: (queueName, cancel) ->
     if cancel
-      @destroyQueue queueName
+      @stopConsuming_ queueName
     else
       @monitor_()
     return this
@@ -75,12 +83,17 @@ class WorkQueueBroker extends events.EventEmitter
       @consumingCB[queueName] data, @ack_.bind(this, queueName) if @consumingCB[queueName]
     @qmgr.popAny.apply @qmgr, args
 
-  destroyQueue: (queueName) ->
+  stopConsuming_: (queueName) ->
     @consumingNames = @consumingNames.reduce (acc,x) ->
       acc.push x unless x is queueName
       return acc
     , []
     delete @consumingCB[queueName]
+    return this
+ 
+  destroyQueue: (queueName) ->
+    @ensureValidQueueName queueName
+    @stopConsuming queueName if @consumingCB[queueName]
     delete @queues[queueName]
     return this
 
