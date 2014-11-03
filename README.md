@@ -518,7 +518,7 @@ some architecture notes.
 ##Architecture Notes
 
 The QueueMgr class is a very thin wrapper around existing redis module functions. It delegates all its
-operations to that module. The WorkQueue class uses different strategies to connect to redis.
+operations to that module. The QueueMgr class uses different strategies to connect to redis.
 A config file specifies which strategy to use and also supplies options to redis.
 
 The WorkQueueBroker class delegates queue send and consume to the QueueMgr class. It maintains a hash of queues created
