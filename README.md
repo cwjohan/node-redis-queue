@@ -450,7 +450,7 @@ corresponding lib directory.
 `grunt jshint` runs jshint on all the .js code except one in the demo/lib/helpers directory. Note that jshint may
 have a lot of complaints about the generated .js code, but is useful to spot potential problems.
 
-`grunt clean` runs a script that removes vim backup files (i.e., files ending with '~' and .js files in the test directory.
+`grunt clean` runs a script that removes vim backup files (i.e., files ending with '~' and .js files in the test directory).
 
 `grunt test` runs the suite of tests using Mocha. It looks for .coffee files in the test directory.
 
