@@ -1,0 +1,3 @@
+#!/bin/bash
+node_modules/.bin/mocha -R spec --compilers coffee:coffee-script/register test
+

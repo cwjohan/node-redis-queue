@@ -54,6 +54,12 @@ module.exports = (grunt) ->
         prefer_english_operator:
           level: 'warn'
 
+    mochaTest:
+      test:
+        options:
+          reporter: 'spec'
+        src: ['test/**/*.coffee']
+
     jshint:
       all: ['lib/*.js', 'spec/*.js', 'demo/lib/*.js']
       options:
@@ -63,16 +69,8 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-contrib-coffee'
   grunt.loadNpmTasks 'grunt-bumpx'
   grunt.loadNpmTasks 'grunt-coffeelint'
+  grunt.loadNpmTasks 'grunt-mocha-test'
   grunt.loadNpmTasks 'grunt-contrib-jshint'
-
-  # Task to run the test suite using jasmine-node.
-  grunt.registerTask 'test', 'Runs Jasmine tests', ->
-    done = this.async()
-    exec 'bash ./node_modules/.bin/mocha -R spec --compilers coffee:coffee-script/register test',
-        (error, stdout, stderr) ->
-          console.log stdout
-          console.log 'Error running tests: ' + error if error?
-          done !error?
 
   # Task to tag a version in git
   grunt.registerTask 'git-tag', 'Tags a release in git', ->
@@ -90,6 +88,17 @@ module.exports = (grunt) ->
       console.log stdout
       console.log 'Error: ' + error if error?
       done !error?
+
+  # Task to compile test coffee files for debugging purposes only
+  grunt.registerTask 'compile-test', 'Runs cleaning script', ->
+    done = this.async()
+    exec 'bash node_modules/.bin/coffee -c -o test test', (error, stdout, stderr) ->
+      console.log stdout
+      console.log 'Error: ' + error if error?
+      done !error?
+
+  # Test meta-task
+  grunt.registerTask 'test', 'mochaTest'
 
   # Release meta-task
   grunt.registerTask 'release', ['coffee', 'git-tag']

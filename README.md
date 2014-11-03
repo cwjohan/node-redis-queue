@@ -450,7 +450,7 @@ corresponding lib directory.
 `grunt jshint` runs jshint on all the .js code except one in the demo/lib/helpers directory. Note that jshint may
 have a lot of complaints about the generated .js code, but is useful to spot potential problems.
 
-`grunt clean` runs a script that removes vim backup files (i.e., files ending with '~'.
+`grunt clean` runs a script that removes vim backup files (i.e., files ending with '~' and .js files in the test directory.
 
 `grunt test` runs the suite of tests using Mocha. It looks for .coffee files in the test directory.
 
@@ -461,6 +461,8 @@ have a lot of complaints about the generated .js code, but is useful to spot pot
 `grunt release` runs coffee on all the .coffee source code in the src directory, converting it to .js code, and
 then runs the git-tag task to commit the latest staged code changes and tag the code with the version obtained from the
 package.json file.
+
+`grunt compile-test` runs coffee on the test .coffee code. This is only for debugging of test cases when you need to see the generated javascript code.
 
 ##Change Log
 
@@ -503,6 +505,12 @@ https://code.google.com/p/v8/issues/detail?id=164
 
 **v0.1.14**: Added 'clean' task to Gruntfile. Fixed some potential problems found by jshint. Tidied Gruntfile.
 Replaced some URLs in the demo source that were no longer working (404 not found).
+
+**v0.1.15**: Send now checks that queue has not been destroyed.
+Added 'compile-test' task to Gruntfile. Fixed
+incorrect calls to isValidQueueName. Added tests for WorkQueue
+exceptions. Grunt now uses grunt-mocha-test plugin for better
+reporting.
 
 ##Note:
 

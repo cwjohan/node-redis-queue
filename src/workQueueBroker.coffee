@@ -4,15 +4,15 @@ events = require 'events'
 QueueMgr = require('..').QueueMgr
 
 class WorkQueue
-  constructor: (@qmgr, @queueName, @options, @consume_) ->
-    return this
-
-  consume: (onData) ->
-    @consume_(@queueName, onData)
+  constructor: (@qmgr, @queueName, @options, @send_, @consume_) ->
     return this
 
   send: (data) ->
-    @qmgr.push @queueName, data
+    @send_ @queueName, data
+    return this
+
+  consume: (onData) ->
+    @consume_ @queueName, onData
     return this
 
   clear: (onClearComplete) ->
@@ -49,14 +49,15 @@ class WorkQueueBroker extends events.EventEmitter
       @emit 'end'
     
   createQueue: (queueName, options) ->
-    return @queues[queueName] = new WorkQueue @qmgr, queueName, options, @consume.bind(this)
+    return @queues[queueName] = new WorkQueue @qmgr, queueName, options, @send.bind(this), @consume.bind(this)
 
   send: (queueName, data) ->
-    if @isValidQueueName
-      @qmgr.push @queueName, data
+    @ensureValidQueueName queueName
+    @qmgr.push queueName, data
     return this
 
   consume: (queueName, onData) ->
+    @ensureValidQueueName queueName
     @consumingNames.push queueName unless @consumingCB[queueName]
     @consumingCB[queueName] = onData
     process.nextTick @monitor_.bind(this)
@@ -95,8 +96,12 @@ class WorkQueueBroker extends events.EventEmitter
     @qmgr.shutdownSoon()
 
   isValidQueueName: (queueName) ->
-    return true if @queues[queueName]
-    throw new WorkQueueBrokerError('Unknown queue "' + queueName + '"')
+    return @queues[queueName]?
+
+  ensureValidQueueName: (queueName) ->
+    unless @queues[queueName]
+      throw (new WorkQueueBrokerError 'Unknown queue "' + queueName + '"')
+    return
 
   commandQueueLength: ->
     @qmgr.commandQueueLength()
