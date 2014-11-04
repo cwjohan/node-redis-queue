@@ -540,8 +540,9 @@ reporting.
 Added destroy function to WorkQueue. Updated README.md with info about the new destroy function. Also, added
 some architecture notes.
 
-**v0.1.17**: Added ability to schedule parallel jobs in consume function via arity parameter. Added @outstanding to queueMgr class.
-worker04 example uses a second WorkQueueBroker instance when arity greater than 1 to send result back to provider04.
+**v0.1.17**: Added ability to schedule parallel jobs in the consume function via an optional arity parameter.
+Added @outstanding to queueMgr class. worker04 example uses a second WorkQueueBroker instance when arity is
+greater than 1 to send result back to provider04.
 
 ##Architecture Notes
 
