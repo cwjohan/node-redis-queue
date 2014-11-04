@@ -38,3 +38,4 @@
         "compile-test": "node_modules/.bin/coffee -c -o test test"
     }
 }
+
