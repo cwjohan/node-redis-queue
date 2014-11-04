@@ -11,8 +11,8 @@ class WorkQueue
     @send_ data
     return this
 
-  consume: (onData) ->
-    @consume_ onData
+  consume: (onData, arity) ->
+    @consume_ onData, arity
     return this
 
   clear: (onClearComplete) ->
@@ -31,7 +31,6 @@ class WorkQueueBroker extends events.EventEmitter
     @consumingCB = {}
     @consumingNames = []
     @qmgr = new QueueMgr(configFilePath)
-    return this
 
   connect: (onReady) ->
     @qmgr.connect onReady
@@ -64,11 +63,12 @@ class WorkQueueBroker extends events.EventEmitter
     @qmgr.push queueName, data
     return this
 
-  consume: (queueName, onData) ->
+  consume: (queueName, onData, arity = 1) ->
     @ensureValidQueueName queueName
     @consumingNames.push queueName unless @consumingCB[queueName]
     @consumingCB[queueName] = onData
-    process.nextTick @monitor_.bind(this)
+    process.nextTick =>
+      @monitor_() while arity--
     return this
 
   ack_: (queueName, cancel) ->
@@ -93,7 +93,7 @@ class WorkQueueBroker extends events.EventEmitter
  
   destroyQueue: (queueName) ->
     @ensureValidQueueName queueName
-    @stopConsuming queueName if @consumingCB[queueName]
+    @stopConsuming_ queueName if @consumingCB[queueName]
     delete @queues[queueName]
     return this
 

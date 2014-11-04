@@ -188,13 +188,24 @@ It is easy to add your own strategy.
             ...
             ack()
 
+   or, alternatively,
+
+        queue.consume (myData, ack) ->  
+            console.log 'data = ' + myData   
+            ...
+            ack()
+        , arity
+
+   where arity is an integer indicating the number of async callbacks to schedule in parallel. See demo 04 for example usage.
+
    If multiple queues are being consumed, they are consumed with highest priority given to the queues consumed first (i.e., in the order in which the consume statements are executed).
 
    Note that ack(true) may be used to indicate that no further data is expected from the given work queue.
    This is useful, for example, in testing, when a clean exit from a test case is desired.
 
-   Once consuming from a queue, avoid sending data to the same queue from the same connection, since
-   a hang could result. This appears to be a Redis limitation when using blocking reads.
+   Once consuming from a queue, avoid sending data to the same queue from the same connection (i.e., the same broker), since
+   a hang could result. This appears to be a Redis limitation when using blocking reads. You can test broker.qmgr.outstanding for zero
+   to determine if it is OK to send on the same connection.
 
 1. Optionally, destroy a work queue if it no longer is needed. Assign null to the queue variable to free up memory.
 
@@ -343,13 +354,24 @@ It is easy to add your own strategy.
             ack();
         });
 
+   or, alternatively,
+
+        queue.consume(function(myData, ack) {
+            console.log('data = ' + myData);
+            ...
+            ack();
+        }, arity);
+
+   where arity is an integer indicating the number of async callbacks to schedule in parallel. See demo 04 for example usage.
+
    If multiple queues are being consumed, they are consumed with highest priority given to the queues consumed first (i.e., in the order in which the consume statements are executed).
 
    Note that ack(true) may be used to indicate that no further data is expected from the given work queue.
    This is useful, for example, in testing, when a clean exit from a test case is desired.
 
-   Once consuming from a queue, avoid sending data to the same queue from the same connection, since
-   a hang could result. This appears to be a Redis limitation when using blocking reads.
+   Once consuming from a queue, avoid sending data to the same queue from the same connection (i.e., the same broker), since
+   a hang could result. This appears to be a Redis limitation when using blocking reads. You can test broker.qmgr.outstanding for zero
+   to determine if it is OK to send on the same connection.
 
 1. Optionally, destroy a work queue if it no longer is needed. Assign null to the queue variable to free up memory.
 
@@ -378,7 +400,7 @@ It is easy to add your own strategy.
 
 This demo shows how to send a series of URLs to a consumer process that computes an SHA1 value for each URL.
 
-1. In the first console window Run `node work01.js`. It will wait for some data to appear in the queue.
+1. In the first console window Run `node worker01.js`. It will wait for some data to appear in the queue.
 1. In the second console window, run `node provider01.js`, which will place four URLs in the queue. Shortly
    thereafter, the worker01 process will pick up the four URLs and display them, fetch a page body for each, and compute an SHA1 value for each.
 1. Repeat step 2 a few times.
@@ -389,7 +411,7 @@ This demo shows how to send a series of URLs to a consumer process that computes
 
 This demo shows how to send a series of URLs to a consumer process that computes an SHA1 value for each URL and returns the SHA1 result to the provider process.
 
-1. In the first console window Run `node work02.js`. It will wait for some data to appear in the queue.
+1. In the first console window Run `node worker02.js`. It will wait for some data to appear in the queue.
 1. In the second console window, run `node provider02.js 01`, which will place four URLs in the queue. Shortly
    thereafter, the worker02 process will pick up the four URLs, display them, fetch a page body for each, and compute an SHA1 value for each, and then return the SHA1 result to the provider02 instance, which will display the result.
 1. Repeat step 2 a few times.
@@ -400,7 +422,7 @@ This demo shows how to send a series of URLs to a consumer process that computes
 
 This demo shows how a worker can service multiple queues using WorkQueueBroker. The provider process, by default, sends three strings to one queue and three strings to the other.
 
-1. In the first console window Run `node work03.js`. It will wait for some data to appear in the queue.
+1. In the first console window Run `node worker03.js`. It will wait for some data to appear in the queue.
 1. In the second console window, run `node provider03.js`, which will place three strings in each queue. Shortly
    thereafter, the worker03 process will pick up the six strings from their respective queues and display them.
 1. Repeat step 2 a few times.
@@ -427,12 +449,15 @@ When monitoring memory usage, run `node provider03.js 400` repeatedly, say as ma
 
 This demo is almost the same as demo 02 but uses WorkQueueBroker rather than QueueMgr. It shows how to send a series of URLs to a consumer process that computes an SHA1 value for each URL and returns the SHA1 result to the provider process.
 
-1. In the first console window Run `node work04.js`. It will wait for some data to appear in the queue.
+1. In the first console window Run `node worker04.js`. It will wait for some data to appear in the queue.
 1. In the second console window, run `node provider04.js 01`, which will place four URLs in the queue. Shortly
    thereafter, the worker04 process will pick up the four URLs, display them, fetch a page body for each, and compute an SHA1 value for each, and then return the SHA1 result to the provider04 instance, which will display the result.
 1. Repeat step 2 a few times.
 1. In the second console window, run `node provider04.js stop`, which will put a stop command in the queue. Shortly
    thereafter, the worker04 process will stop.
+
+Try the above again using `node worker04 3` in step 1. Observe that the worker will process three input requests in parallel and
+that the results may become available in a different order than the input requests.
 
 ##Running the test suite
 
@@ -514,6 +539,9 @@ reporting.
 **v0.1.16**: Reverted WorkQueue behaviour back to previous version since v0.1.15 change was too restrictive.
 Added destroy function to WorkQueue. Updated README.md with info about the new destroy function. Also, added
 some architecture notes.
+
+**v0.1.17**: Added ability to schedule parallel jobs in consume function via arity parameter. Added @outstanding to queueMgr class.
+worker04 example uses a second WorkQueueBroker instance when arity greater than 1 to send result back to provider04.
 
 ##Architecture Notes
 

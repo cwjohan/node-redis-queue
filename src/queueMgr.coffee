@@ -10,6 +10,7 @@ class QueueMgr extends events.EventEmitter
                      '../redis-queue-config.json'
     @configurator = require './redisQueueConfig'
     @config = @configurator.getConfig(configFilePath)
+    @outstanding = 0
 
   connect: (onReady) ->
     @client = @configurator.getClient(@config)
@@ -36,7 +37,9 @@ class QueueMgr extends events.EventEmitter
     return this
 
   pop: (key, onData) ->
+    ++@outstanding
     @client.brpop key, 0, (err, replies) =>
+      --@outstanding
       if err?
         @emit 'error', err
       else
@@ -48,7 +51,9 @@ class QueueMgr extends events.EventEmitter
     return this
 
   popAny: (keys..., onData) ->
+    ++@outstanding
     @client.brpop keys..., 0, (err, replies) =>
+      --@outstanding
       if err?
         @emit 'error', err
       else

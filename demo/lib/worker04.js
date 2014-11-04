@@ -16,12 +16,15 @@ Usage:
    cd demo/lib
    export NODE_PATH='../../..'
    node worker04.js
+ or
+   node worker04.js 3
+ to demonstrate arity feature.
 
 Use this app in conjunction with provider04.js. See the provider04 source code
 for more details.
 */
 
-var SHA1, WorkQueueBroker, consumeUrlQueue, createUrlQueue, initEventHandlers, myBroker, request, shutDown, urlQueue, urlQueueName;
+var SHA1, WorkQueueBroker, arity, consumeUrlQueue, createUrlQueue, initEventHandlers, myBroker, myBroker2, request, shutDown, urlQueue, urlQueueName;
 
 WorkQueueBroker = require('node-redis-queue').WorkQueueBroker;
 
@@ -33,10 +36,19 @@ urlQueueName = 'urlq';
 
 urlQueue = null;
 
+arity = parseInt(process.argv[2]) || 1;
+
 myBroker = new WorkQueueBroker();
+
+myBroker2 = arity > 1 ? new WorkQueueBroker() : myBroker;
 
 myBroker.connect(function() {
   initEventHandlers();
+  if (myBroker2 !== myBroker) {
+    myBroker2.connect(function() {
+      return console.log('send channel connected');
+    });
+  }
   createUrlQueue();
   consumeUrlQueue();
   return console.log('waiting for work...');
@@ -60,23 +72,22 @@ createUrlQueue = function() {
 consumeUrlQueue = function() {
   return urlQueue.consume(function(req, ack) {
     if (typeof req === 'object') {
-      console.log('worker04 processing request ', req);
+      console.log('worker04 processing request ', req, ' (' + myBroker.qmgr.outstanding + ')');
       return request(req.url, function(error, response, body) {
         var sha1;
         if (!error && response.statusCode === 200) {
           sha1 = SHA1(body);
-          console.log('sending ' + req.url + ' SHA1 = ' + sha1);
-          myBroker.qmgr.push(req.q, {
+          console.log('sending ' + req.url + ' SHA1 = ' + sha1, ' (' + myBroker.qmgr.outstanding + ')');
+          myBroker2.qmgr.push(req.q, {
             url: req.url,
             sha1: sha1
           });
           return ack();
         } else {
           console.log('>>>error: ', error);
-          myBroker.qmgr.push(req.q, {
+          myBroker2.qmgr.push(req.q, {
             url: req.url,
-            err: error,
-            code: response.statusCode
+            err: error
           });
           return shutDown();
         }
@@ -90,7 +101,7 @@ consumeUrlQueue = function() {
       console.log('Type of message = ' + typeof req);
       return ack();
     }
-  });
+  }, arity);
 };
 
 shutDown = function() {

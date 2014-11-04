@@ -144,6 +144,28 @@ describe '===WorkQueueBroker send/consume===', ->
           ack itemCntQ2 >= expectedItemsQ2.length
         ,10
 
+  it 'must be able to schedule multiple async jobs in parallel', (done) ->
+    for item in expectedItemsQ1
+      console.log 'sending ' + item if verbose
+      myWorkQueue1.send item
+
+    arity = 3
+    parallelCnt = maxCnt = itemsProcessed = 0
+    myWorkQueue1.consume (data, ack) ->
+      console.log 'processing ' + data if verbose
+      maxCnt = Math.max ++parallelCnt, maxCnt
+      setTimeout ->
+        console.log 'processed ' + data if verbose
+        --parallelCnt
+        if ++itemsProcessed is expectedItemsQ1.length
+          expect(maxCnt).to.equal arity
+          ack(true)
+          done()
+        else
+          ack()
+      , 10
+    , arity
+
   it 'send/consume throw error if queue no longer exists', ->
     myWorkQueue1.destroy()
     expect( () ->

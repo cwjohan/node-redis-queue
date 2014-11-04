@@ -15,6 +15,9 @@ Usage:
    cd demo/lib
    export NODE_PATH='../../..'
    node worker04.js
+ or
+   node worker04.js 3
+ to demonstrate arity feature.
 
 Use this app in conjunction with provider04.js. See the provider04 source code
 for more details.
@@ -24,10 +27,16 @@ request = require 'request'
 SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1
 urlQueueName = 'urlq'
 urlQueue = null
+arity = parseInt(process.argv[2]) or 1
 
 myBroker = new WorkQueueBroker()
+myBroker2 = if arity > 1 then new WorkQueueBroker() else myBroker
+
 myBroker.connect ->
   initEventHandlers()
+  if myBroker2 isnt myBroker
+    myBroker2.connect ->
+      console.log 'send channel connected'
   createUrlQueue()
   consumeUrlQueue()
   console.log 'waiting for work...'
@@ -48,16 +57,16 @@ createUrlQueue = ->
 consumeUrlQueue = ->
   urlQueue.consume (req, ack) ->
     if typeof req is 'object'
-      console.log 'worker04 processing request ', req
+      console.log 'worker04 processing request ', req, ' (' + myBroker.qmgr.outstanding + ')'
       request req.url, (error, response, body) ->
         if not error and response.statusCode is 200
           sha1 = SHA1 body
-          console.log 'sending ' + req.url + ' SHA1 = ' + sha1
-          myBroker.qmgr.push req.q, {url: req.url, sha1: sha1}
+          console.log 'sending ' + req.url + ' SHA1 = ' + sha1, ' (' + myBroker.qmgr.outstanding + ')'
+          myBroker2.qmgr.push req.q, {url: req.url, sha1: sha1}
           ack()
         else
           console.log '>>>error: ', error
-          myBroker.qmgr.push req.q, {url: req.url, err: error, code: response.statusCode}
+          myBroker2.qmgr.push req.q, {url: req.url, err: error}
           shutDown()
     else
       if typeof req is 'string' and req is '***stop***'
@@ -66,6 +75,7 @@ consumeUrlQueue = ->
       console.log 'Unexpected message: ', req
       console.log 'Type of message = ' + typeof req
       ack()
+  , arity
 
 shutDown = ->
   myBroker.end()
