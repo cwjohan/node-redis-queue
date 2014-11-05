@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-WorkQueueBroker Example -- worker04
+WorkQueueMgr Example -- worker04
 
 This app consumes work requests that become available in the 'urlq' queue,
 as provided by provider04. For each one it receives, this app computes an
@@ -24,9 +24,9 @@ Use this app in conjunction with provider04.js. See the provider04 source code
 for more details.
 */
 
-var SHA1, WorkQueueBroker, arity, consumeUrlQueue, createUrlQueue, initEventHandlers, myBroker, myBroker2, request, shutDown, urlQueue, urlQueueName;
+var SHA1, WorkQueueMgr, arity, consumeUrlQueue, createUrlQueue, initEventHandlers, mgr, mgr2, request, shutDown, urlQueue, urlQueueName;
 
-WorkQueueBroker = require('node-redis-queue').WorkQueueBroker;
+WorkQueueMgr = require('node-redis-queue').WorkQueueMgr;
 
 request = require('request');
 
@@ -38,14 +38,15 @@ urlQueue = null;
 
 arity = parseInt(process.argv[2]) || 1;
 
-myBroker = new WorkQueueBroker();
+mgr = new WorkQueueMgr();
 
-myBroker2 = arity > 1 ? new WorkQueueBroker() : myBroker;
+mgr2 = arity > 1 ? new WorkQueueMgr() : mgr;
 
-myBroker.connect(function() {
+mgr.connect(function() {
+  console.log('receive channel connected');
   initEventHandlers();
-  if (myBroker2 !== myBroker) {
-    myBroker2.connect(function() {
+  if (mgr2 !== mgr) {
+    mgr2.connect(function() {
       return console.log('send channel connected');
     });
   }
@@ -55,37 +56,37 @@ myBroker.connect(function() {
 });
 
 initEventHandlers = function() {
-  myBroker.on('end', function() {
+  mgr.on('end', function() {
     console.log('worker04 detected Redis connection ended');
     return shutDown();
   });
-  return myBroker.on('error', function(error) {
+  return mgr.on('error', function(error) {
     console.log('worker04 stopping due to: ' + error);
     return shutDown();
   });
 };
 
 createUrlQueue = function() {
-  urlQueue = myBroker.createQueue(urlQueueName);
+  urlQueue = mgr.createQueue(urlQueueName);
 };
 
 consumeUrlQueue = function() {
   return urlQueue.consume(function(req, ack) {
     if (typeof req === 'object') {
-      console.log('worker04 processing request ', req, ' (' + myBroker.qmgr.outstanding + ')');
+      console.log('worker04 processing request ', req, ' (' + mgr.channel.outstanding + ')');
       return request(req.url, function(error, response, body) {
         var sha1;
         if (!error && response.statusCode === 200) {
           sha1 = SHA1(body);
-          console.log('sending ' + req.url + ' SHA1 = ' + sha1, ' (' + myBroker.qmgr.outstanding + ')');
-          myBroker2.qmgr.push(req.q, {
+          console.log('sending ' + req.url + ' SHA1 = ' + sha1, ' (' + mgr.channel.outstanding + ')');
+          mgr2.channel.push(req.q, {
             url: req.url,
             sha1: sha1
           });
           return ack();
         } else {
           console.log('>>>error: ', error);
-          myBroker2.qmgr.push(req.q, {
+          mgr2.channel.push(req.q, {
             url: req.url,
             err: error
           });
@@ -105,6 +106,6 @@ consumeUrlQueue = function() {
 };
 
 shutDown = function() {
-  myBroker.end();
+  mgr.end();
   return process.exit();
 };

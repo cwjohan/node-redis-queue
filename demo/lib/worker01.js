@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-QueueMgr Example -- worker01
+Channel Example -- worker01
 
 This app waits for URLs to become available in the 'urlq' queue, as provided
 by worker01. Then, for each one it receives, the app gets the page for the URL,
@@ -18,9 +18,9 @@ Use this app in conjunction with provider01.js. See the provider01 source code
 for more details.
 */
 
-var QueueMgr, SHA1, initEventHandlers, onData, qmgr, request, shutDown, urlQueueName;
+var Channel, SHA1, channel, initEventHandlers, onData, request, shutDown, urlQueueName;
 
-QueueMgr = require('node-redis-queue').QueueMgr;
+Channel = require('node-redis-queue').Channel;
 
 request = require('request');
 
@@ -28,22 +28,22 @@ SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1;
 
 urlQueueName = 'urlq';
 
-qmgr = null;
+channel = null;
 
-qmgr = new QueueMgr();
+channel = new Channel();
 
-qmgr.connect(function() {
+channel.connect(function() {
   initEventHandlers();
-  qmgr.pop(urlQueueName, onData);
+  channel.pop(urlQueueName, onData);
   return console.log('Waiting for data...');
 });
 
 initEventHandlers = function() {
-  qmgr.on('end', function() {
+  channel.on('end', function() {
     console.log('worker01 detected Redis connection ended');
     return shutDown();
   });
-  return qmgr.on('error', function(error) {
+  return channel.on('error', function(error) {
     console.log('worker01 stopping due to: ' + error);
     return shutDown();
   });
@@ -62,7 +62,7 @@ onData = function(url) {
       if (!error && response.statusCode === 200) {
         sha1 = SHA1(body);
         console.log(url + ' SHA1 = ' + sha1);
-        qmgr.pop(urlQueueName, onData);
+        channel.pop(urlQueueName, onData);
       } else {
         console.log(error);
       }
@@ -73,6 +73,6 @@ onData = function(url) {
 };
 
 shutDown = function() {
-  qmgr.end();
+  channel.end();
   return process.exit();
 };

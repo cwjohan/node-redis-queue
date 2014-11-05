@@ -1,6 +1,6 @@
 'use strict'
 ###
-WorkQueueBroker Example -- provider04
+WorkQueueMgr Example -- provider04
 
 For each URL in the urls list, this app puts a work request in 'urlq' queue to be
 consumed by worker04. It then waits for the results to be returned in 'urlshaq01'
@@ -27,7 +27,7 @@ Example usage:
 Use this app in conjunction with worker02.js. See the worker02 source code
 for more details.
 ###
-WorkQueueBroker = require('node-redis-queue').WorkQueueBroker
+WorkQueueMgr = require('node-redis-queue').WorkQueueMgr
 urlQueueName = 'urlq'
 urlQueue = null
 resultQueue = null
@@ -47,8 +47,8 @@ urls = [
 ]
 resultsExpected = 0
 
-myBroker = new WorkQueueBroker()
-myBroker.connect ->
+mgr = new WorkQueueMgr()
+mgr.connect ->
   console.log 'connected'
   initEventHandlers()
   createWorkQueues()
@@ -61,17 +61,17 @@ myBroker.connect ->
     consumeResultQueue()
 
 initEventHandlers = ->
-  myBroker.on 'end', () ->
+  mgr.on 'end', () ->
     console.log 'provider04 finished'
     process.exit()
 
-  myBroker.on 'error', (error) ->
+  mgr.on 'error', (error) ->
     console.log 'provider01 stopping due to: ' + error
     process.exit()
 
 createWorkQueues = ->
-  urlQueue = myBroker.createQueue urlQueueName
-  resultQueue = myBroker.createQueue resultQueueName
+  urlQueue = mgr.createQueue urlQueueName
+  resultQueue = mgr.createQueue resultQueueName
   return
 
 clearQueues = ->
@@ -79,7 +79,7 @@ clearQueues = ->
     console.log 'cleared "' + urlQueueName + '"'
     resultQueue.clear ->
       console.log 'cleared "' + resultQueueName + '"'
-      myBroker.disconnect()
+      mgr.disconnect()
 
 sendURLs = ->
   unless stopWorker
@@ -93,10 +93,10 @@ consumeResultQueue = ->
   resultQueue.consume (result, ack) ->
     console.log 'result = ', result
     ack()
-    myBroker.end() unless --resultsExpected
+    mgr.end() unless --resultsExpected
 
 stopOneWorker = ->
   console.log 'Stopping worker'
   urlQueue.send '***stop***'
-  myBroker.disconnect()
+  mgr.disconnect()
 

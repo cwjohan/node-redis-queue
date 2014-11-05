@@ -1,6 +1,6 @@
 'use strict'
 ###
-QueueMgr Example -- provider01
+Channel Example -- provider01
 
 For each URL in the urls list, this app pushes it into the 'urlq' queue
 for consumption by worker01. When done with that, it quits.
@@ -16,9 +16,9 @@ Usage:
 Use this app in conjunction with worker01.js. See the worker01 source code
 for more details.
 ###
-QueueMgr = require('node-redis-queue').QueueMgr
+Channel = require('node-redis-queue').Channel
 urlQueueName = 'urlq'
-qmgr = null
+channel = null
 clearInitially = process.argv[2] is 'clear'
 stopWorker = process.argv[2] is 'stop'
 urls = [
@@ -28,14 +28,14 @@ urls = [
   'https://code.google.com'
 ]
 
-qmgr = new QueueMgr()
-qmgr.connect ->
+channel = new Channel()
+channel.connect ->
   console.log 'connected'
   initEventHandlers()
   main()
 
 initEventHandlers = ->
-  qmgr.on 'end', () ->
+  channel.on 'end', () ->
     console.log 'provider01 finished'
     process.exit()
   .on 'error', (error) ->
@@ -44,20 +44,20 @@ initEventHandlers = ->
 
 main = ->
   if clearInitially
-    qmgr.clear urlQueueName, () ->
+    channel.clear urlQueueName, () ->
       console.log 'Cleared "' + urlQueueName + '"'
       enqueueURLs()
-      qmgr.disconnect()
+      channel.disconnect()
   else
     unless stopWorker
       enqueueURLs()
     else
       console.log 'Stopping worker'
-      qmgr.push urlQueueName, '***stop***'
-    qmgr.disconnect()
+      channel.push urlQueueName, '***stop***'
+    channel.disconnect()
 
 enqueueURLs = ->
   for url in urls
     console.log 'Pushing "' + url + '" to queue "' + urlQueueName + '"'
-    qmgr.push urlQueueName, url
+    channel.push urlQueueName, url
   return

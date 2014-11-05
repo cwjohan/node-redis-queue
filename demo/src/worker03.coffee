@@ -1,6 +1,6 @@
 'use strict'
 ###
-WorkQueueBroker Example -- worker03
+WorkQueueMgr Example -- worker03
 
 This program consumes two work queues: 'work-queue-1' and 'work-queue-2'.
 It simply prints each message consumed and then "acks" it, so that the
@@ -17,15 +17,15 @@ Usage:
 Use this program in conjunction with provider03. See provider03 source code
 for more details.
 ###
-myWorkQueue1 = null
-myWorkQueue2 = null
-myBroker = null
+queue1 = null
+queue2 = null
+mgr = null
 queuesActive = 0
 
-WorkQueueBroker = require('node-redis-queue').WorkQueueBroker
+WorkQueueMgr = require('node-redis-queue').WorkQueueMgr
 
-myBroker = new WorkQueueBroker()
-myBroker.connect () ->
+mgr = new WorkQueueMgr()
+mgr.connect () ->
   console.log 'work queue broker ready'
   checkArgs()
   initEventHandlers()
@@ -43,33 +43,33 @@ checkArgs = ->
       console.log '>>>LEAK = ', d
 
 initEventHandlers = ->
-  myBroker.on 'error', (error) ->
+  mgr.on 'error', (error) ->
     console.log '>>>' + error
     shutDown()
-  myBroker.on 'end', ->
+  mgr.on 'end', ->
     console.log '>>>End Redis connection'
     shutDown()
 
 createWorkQueues = ->
-  myWorkQueue1 = myBroker.createQueue 'work-queue-1'
-  myWorkQueue2 = myBroker.createQueue 'work-queue-2'
+  queue1 = mgr.createQueue 'work-queue-1'
+  queue2 = mgr.createQueue 'work-queue-2'
   queuesActive = 2
   return
 
 consumeData = ->
   console.log 'consuming queue "work-queue-1"'
-  myWorkQueue1.consume (payload, ack) ->
+  queue1.consume (payload, ack) ->
     console.log 'received message "' + payload + '" in queue "work-queue-1"'
     ack payload is '***stop***'
-    myBroker.end() if payload is '***stop***' and --queuesActive is 0
+    mgr.end() if payload is '***stop***' and --queuesActive is 0
 
   console.log 'consuming queue "work-queue-2"'
-  myWorkQueue2.consume (payload, ack) ->
+  queue2.consume (payload, ack) ->
     console.log 'received message "' + payload + '" in queue "work-queue-2"'
     ack payload is '***stop***'
-    myBroker.end() if payload is '***stop***' and --queuesActive is 0
+    mgr.end() if payload is '***stop***' and --queuesActive is 0
 
 shutDown = ->
-  myBroker.end()
+  mgr.end()
   process.exit()
 

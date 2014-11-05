@@ -1,6 +1,6 @@
 'use strict'
-QueueMgr = require('..').QueueMgr
-qmgr = null
+Channel = require('..').Channel
+channel = null
 queueName1 = 'test:queue-1'
 queueName2 = 'test:queue-2'
 expect = (require 'chai').expect
@@ -18,15 +18,15 @@ expectedItems2 = [
     'item tres',
 ]
 
-describe '===QueueMgr push/pop===', ->
+describe '===Channel push/pop===', ->
   it 'must connect to redis-server', (done) ->
-    qmgr = new QueueMgr
-    qmgr.connect ->
-      console.log 'push/pop queue mgr ready' if verbose
-      expect(qmgr).to.be.a('object')
-      expect(qmgr.push).to.be.a 'function'
+    channel = new Channel
+    channel.connect ->
+      console.log 'push/pop queue channel ready' if verbose
+      expect(channel).to.be.a('object')
+      expect(channel.push).to.be.a 'function'
 
-      qmgr.on 'error', (error) ->
+      channel.on 'error', (error) ->
         console.log '>>>' + error
         throw error if error instanceof Error
         process.exit()
@@ -34,25 +34,25 @@ describe '===QueueMgr push/pop===', ->
 
   it 'must clear test-queues', (done) ->
       queuesToClear = 2
-      qmgr.clear queueName1, ->
+      channel.clear queueName1, ->
         console.log 'Cleared "' + queueName1 + '"' if verbose
         done() unless --queuesToClear
-      qmgr.clear queueName2, ->
+      channel.clear queueName2, ->
         console.log 'Cleared "' + queueName2 + '"' if verbose
         done() unless --queuesToClear
 
   it 'must retrieve pushed items in correct order', (done) ->
-    qmgr.on 'end', ->
-      console.log '>>>End QueueMgr connection'
+    channel.on 'end', ->
+      console.log '>>>End Channel connection'
 
     for item in expectedItems1
       console.log 'Pushing message "' + item + '" to queue "' + queueName1 + '"' \
         if verbose
-      qmgr.push queueName1, item
+      channel.push queueName1, item
 
     itemCnt = 0
     for item in expectedItems1
-      qmgr.pop queueName1, (data) ->
+      channel.pop queueName1, (data) ->
         console.log 'Received message "' + data +
                     '" in queue "' + queueName1 + '"' if verbose
         expect(data).to.equal expectedItems1[itemCnt++]
@@ -63,18 +63,18 @@ describe '===QueueMgr push/pop===', ->
     for item in expectedItems1
       console.log 'Pushing message "' + item + '" to queue "' + queueName1 + '"' \
         if verbose
-      qmgr.push queueName1, item
+      channel.push queueName1, item
       ++itemsQueued
 
     for item in expectedItems2
       console.log 'Pushing message "' + item + '" to queue "' + queueName2 + '"' \
         if verbose
-      qmgr.push queueName2, item
+      channel.push queueName2, item
       ++itemsQueued
     
     itemCnt1 = itemCnt2 = 0
     consume = ->
-      qmgr.popAny queueName1, queueName2, (queueName, data) ->
+      channel.popAny queueName1, queueName2, (queueName, data) ->
         console.log 'Received message "' + data +
                     '" in queue "' + queueName + '"' if verbose
         if queueName is queueName1
@@ -88,6 +88,6 @@ describe '===QueueMgr push/pop===', ->
     consume()
 
   it 'quits cleanly', ->
-    console.log 'Ending QueueMgr push/pop test' if verbose
-    expect(qmgr.end()).to.equal true
+    console.log 'Ending Channel push/pop test' if verbose
+    expect(channel.end()).to.equal true
 

@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-QueueMgr Example -- provider02
+Channel Example -- provider02
 
 For each URL in the urls list, this app puts a work request in 'urlq' queue
 consumed by worker02 and waits for the results to be returned in 'urlshaq01'
@@ -29,9 +29,9 @@ Use this app in conjunction with worker02.js. See the worker02 source code
 for more details.
 */
 
-var QueueMgr, clearInitially, enqueueURLs, initEventHandlers, main, onData, providerId, qmgr, resultQueueName, resultsExpected, shutDown, stopWorker, urlQueueName, urls;
+var Channel, channel, clearInitially, enqueueURLs, initEventHandlers, main, onData, providerId, resultQueueName, resultsExpected, shutDown, stopWorker, urlQueueName, urls;
 
-QueueMgr = require('node-redis-queue').QueueMgr;
+Channel = require('node-redis-queue').Channel;
 
 urlQueueName = 'urlq';
 
@@ -52,20 +52,20 @@ urls = ['http://www.google.com', 'http://www.yahoo.com', 'http://www.google.com/
 
 resultsExpected = 0;
 
-qmgr = new QueueMgr();
+channel = new Channel();
 
-qmgr.connect(function() {
+channel.connect(function() {
   console.log('connected');
   initEventHandlers();
   return main();
 });
 
 initEventHandlers = function() {
-  qmgr.on('end', function() {
+  channel.on('end', function() {
     console.log('provider01 finished');
     return shutDown();
   });
-  return qmgr.on('error', function(error) {
+  return channel.on('error', function(error) {
     console.log('provider01 stopping due to: ' + error);
     return shutDown();
   });
@@ -73,9 +73,9 @@ initEventHandlers = function() {
 
 main = function() {
   if (clearInitially) {
-    return qmgr.clear(urlQueueName, function() {
+    return channel.clear(urlQueueName, function() {
       console.log('Cleared "' + urlQueueName + '"');
-      return qmgr.clear(resultQueueName, function() {
+      return channel.clear(resultQueueName, function() {
         console.log('Cleared "' + resultQueueName + '"');
         return shutDown();
       });
@@ -85,7 +85,7 @@ main = function() {
       return enqueueURLs();
     } else {
       console.log('Stopping worker');
-      qmgr.push(urlQueueName, '***stop***');
+      channel.push(urlQueueName, '***stop***');
       return shutDown();
     }
   }
@@ -96,26 +96,26 @@ enqueueURLs = function() {
   for (_i = 0, _len = urls.length; _i < _len; _i++) {
     url = urls[_i];
     console.log('Pushing "' + url + '"');
-    qmgr.push(urlQueueName, {
+    channel.push(urlQueueName, {
       url: url,
       q: resultQueueName
     });
     ++resultsExpected;
   }
-  qmgr.pop(resultQueueName, onData);
+  channel.pop(resultQueueName, onData);
   return console.log('waiting for responses from worker...');
 };
 
 onData = function(result) {
   console.log('result = ', result);
   if (--resultsExpected) {
-    return qmgr.pop(resultQueueName, onData);
+    return channel.pop(resultQueueName, onData);
   } else {
     return shutDown();
   }
 };
 
 shutDown = function() {
-  qmgr.end();
+  channel.end();
   return process.exit();
 };

@@ -1,9 +1,9 @@
 'use strict'
 events = require 'events'
 
-class QueueMgrError extends Error
+class ChannelError extends Error
 
-class QueueMgr extends events.EventEmitter
+class Channel extends events.EventEmitter
   constructor: (configFilePath) ->
     configFilePath = process.env.QUEUE_CONFIG_FILE or
                      configFilePath or
@@ -18,7 +18,7 @@ class QueueMgr extends events.EventEmitter
       
   attach: (@client, onReady) ->
     unless @client instanceof Object
-      throw new QueueMgrError 'No client supplied'
+      throw new ChannelError 'No client supplied'
     @client.on 'ready', =>
       @ready = true
       onReady() if onReady and typeof onReady is 'function'
@@ -47,7 +47,7 @@ class QueueMgr extends events.EventEmitter
           onData(JSON.parse(replies[1])) if onData
         else
           if replies?
-            @emit 'error', new QueueMgrError 'Replies not Array of two elements'
+            @emit 'error', new ChannelError 'Replies not Array of two elements'
     return this
 
   popAny: (keys..., onData) ->
@@ -61,7 +61,7 @@ class QueueMgr extends events.EventEmitter
           onData(replies[0], JSON.parse(replies[1])) if onData
         else
           if replies?
-            @emit 'error', new QueueMgrError 'Replies not Array of two elements'
+            @emit 'error', new ChannelError 'Replies not Array of two elements'
     return this
 
   clear: (keysToClear..., onClear) ->
@@ -87,4 +87,4 @@ class QueueMgr extends events.EventEmitter
   commandQueueLength: ->
     @client.command_queue.length
 
-exports.qmgr = QueueMgr
+exports.channel = Channel

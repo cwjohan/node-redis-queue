@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-QueueMgr Example -- provider01
+Channel Example -- provider01
 
 For each URL in the urls list, this app pushes it into the 'urlq' queue
 for consumption by worker01. When done with that, it quits.
@@ -18,13 +18,13 @@ Use this app in conjunction with worker01.js. See the worker01 source code
 for more details.
 */
 
-var QueueMgr, clearInitially, enqueueURLs, initEventHandlers, main, qmgr, stopWorker, urlQueueName, urls;
+var Channel, channel, clearInitially, enqueueURLs, initEventHandlers, main, stopWorker, urlQueueName, urls;
 
-QueueMgr = require('node-redis-queue').QueueMgr;
+Channel = require('node-redis-queue').Channel;
 
 urlQueueName = 'urlq';
 
-qmgr = null;
+channel = null;
 
 clearInitially = process.argv[2] === 'clear';
 
@@ -32,16 +32,16 @@ stopWorker = process.argv[2] === 'stop';
 
 urls = ['http://www.google.com', 'http://www.yahoo.com', 'http://www.google.com/robots.txt', 'https://code.google.com'];
 
-qmgr = new QueueMgr();
+channel = new Channel();
 
-qmgr.connect(function() {
+channel.connect(function() {
   console.log('connected');
   initEventHandlers();
   return main();
 });
 
 initEventHandlers = function() {
-  return qmgr.on('end', function() {
+  return channel.on('end', function() {
     console.log('provider01 finished');
     return process.exit();
   }).on('error', function(error) {
@@ -52,19 +52,19 @@ initEventHandlers = function() {
 
 main = function() {
   if (clearInitially) {
-    return qmgr.clear(urlQueueName, function() {
+    return channel.clear(urlQueueName, function() {
       console.log('Cleared "' + urlQueueName + '"');
       enqueueURLs();
-      return qmgr.disconnect();
+      return channel.disconnect();
     });
   } else {
     if (!stopWorker) {
       enqueueURLs();
     } else {
       console.log('Stopping worker');
-      qmgr.push(urlQueueName, '***stop***');
+      channel.push(urlQueueName, '***stop***');
     }
-    return qmgr.disconnect();
+    return channel.disconnect();
   }
 };
 
@@ -73,6 +73,6 @@ enqueueURLs = function() {
   for (_i = 0, _len = urls.length; _i < _len; _i++) {
     url = urls[_i];
     console.log('Pushing "' + url + '" to queue "' + urlQueueName + '"');
-    qmgr.push(urlQueueName, url);
+    channel.push(urlQueueName, url);
   }
 };

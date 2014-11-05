@@ -1,6 +1,6 @@
 'use strict'
 ###
-WorkQueueBroker Example -- provider03
+WorkQueueMgr Example -- provider03
 
 For each string in the two expectedItems lists, this app sends it
 into either 'work-queue-1' or 'work-queue-2' for consumption by worker03.
@@ -18,9 +18,9 @@ Usage:
 Use this app in conjunction with worker03.js. See the worker03 source code
 for more details.
 ###
-myWorkQueue1 = null
-myWorkQueue2 = null
-myBroker = null
+queue1 = null
+queue2 = null
+mgr = null
 expectedItemsQ1 = [
     'item one',
     'item two',
@@ -38,11 +38,11 @@ clear = process.argv[2] is 'clear'
 stop = process.argv[2] is 'stop'
 timesToRepeat = parseInt(process.argv[2]) or 1
 
-WorkQueueBroker = require('node-redis-queue').WorkQueueBroker
+WorkQueueMgr = require('node-redis-queue').WorkQueueMgr
 
-myBroker = new WorkQueueBroker()
-myBroker.connect () ->
-  console.log 'work queue broker ready'
+mgr = new WorkQueueMgr()
+mgr.connect () ->
+  console.log 'work queue manager ready'
   initEventHandlers()
   createWorkQueues()
   if stop
@@ -56,24 +56,24 @@ myBroker.connect () ->
     shutDown()
 
 initEventHandlers = ->
-  myBroker.on 'error', (error) ->
+  mgr.on 'error', (error) ->
     console.log '>>>' + error
     shutDown()
-  myBroker.on 'end', ->
+  mgr.on 'end', ->
     console.log '>>>End Redis connection'
     shutDown()
 
 createWorkQueues = ->
-  myWorkQueue1 = myBroker.createQueue 'work-queue-1'
-  myWorkQueue2 = myBroker.createQueue 'work-queue-2'
+  queue1 = mgr.createQueue 'work-queue-1'
+  queue2 = mgr.createQueue 'work-queue-2'
   return
 
 clearWorkQueues = (done) ->
   queuesToClear = 2
-  myWorkQueue1.clear () ->
+  queue1.clear () ->
     console.log 'Cleared "work-queue-1"'
     done() unless --queuesToClear
-  myWorkQueue2.clear () ->
+  queue2.clear () ->
     console.log 'Cleared "work-queue-2"'
     done() unless --queuesToClear
 
@@ -81,18 +81,18 @@ sendData = ->
   while timesToRepeat--
     for item in expectedItemsQ1
       console.log 'publishing "' + item + '" to queue "work-queue-1"'
-      myWorkQueue1.send item
+      queue1.send item
 
     for item in expectedItemsQ2
       console.log 'publishing "' + item + '" to queue "work-queue-2"'
-      myWorkQueue2.send item
+      queue2.send item
   return
 
 sendStop = ->
   console.log 'stopping worker03'
-  myWorkQueue1.send '***stop***'
-  myWorkQueue2.send '***stop***'
+  queue1.send '***stop***'
+  queue2.send '***stop***'
 
 shutDown = ->
-  myBroker.shutdownSoon()
+  mgr.shutdownSoon()
 

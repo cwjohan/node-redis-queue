@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-WorkQueueBroker Example -- worker03
+WorkQueueMgr Example -- worker03
 
 This program consumes two work queues: 'work-queue-1' and 'work-queue-2'.
 It simply prints each message consumed and then "acks" it, so that the
@@ -19,21 +19,21 @@ Use this program in conjunction with provider03. See provider03 source code
 for more details.
 */
 
-var WorkQueueBroker, checkArgs, consumeData, createWorkQueues, initEventHandlers, myBroker, myWorkQueue1, myWorkQueue2, queuesActive, shutDown;
+var WorkQueueMgr, checkArgs, consumeData, createWorkQueues, initEventHandlers, mgr, queue1, queue2, queuesActive, shutDown;
 
-myWorkQueue1 = null;
+queue1 = null;
 
-myWorkQueue2 = null;
+queue2 = null;
 
-myBroker = null;
+mgr = null;
 
 queuesActive = 0;
 
-WorkQueueBroker = require('node-redis-queue').WorkQueueBroker;
+WorkQueueMgr = require('node-redis-queue').WorkQueueMgr;
 
-myBroker = new WorkQueueBroker();
+mgr = new WorkQueueMgr();
 
-myBroker.connect(function() {
+mgr.connect(function() {
   console.log('work queue broker ready');
   checkArgs();
   initEventHandlers();
@@ -57,42 +57,42 @@ checkArgs = function() {
 };
 
 initEventHandlers = function() {
-  myBroker.on('error', function(error) {
+  mgr.on('error', function(error) {
     console.log('>>>' + error);
     return shutDown();
   });
-  return myBroker.on('end', function() {
+  return mgr.on('end', function() {
     console.log('>>>End Redis connection');
     return shutDown();
   });
 };
 
 createWorkQueues = function() {
-  myWorkQueue1 = myBroker.createQueue('work-queue-1');
-  myWorkQueue2 = myBroker.createQueue('work-queue-2');
+  queue1 = mgr.createQueue('work-queue-1');
+  queue2 = mgr.createQueue('work-queue-2');
   queuesActive = 2;
 };
 
 consumeData = function() {
   console.log('consuming queue "work-queue-1"');
-  myWorkQueue1.consume(function(payload, ack) {
+  queue1.consume(function(payload, ack) {
     console.log('received message "' + payload + '" in queue "work-queue-1"');
     ack(payload === '***stop***');
     if (payload === '***stop***' && --queuesActive === 0) {
-      return myBroker.end();
+      return mgr.end();
     }
   });
   console.log('consuming queue "work-queue-2"');
-  return myWorkQueue2.consume(function(payload, ack) {
+  return queue2.consume(function(payload, ack) {
     console.log('received message "' + payload + '" in queue "work-queue-2"');
     ack(payload === '***stop***');
     if (payload === '***stop***' && --queuesActive === 0) {
-      return myBroker.end();
+      return mgr.end();
     }
   });
 };
 
 shutDown = function() {
-  myBroker.end();
+  mgr.end();
   return process.exit();
 };

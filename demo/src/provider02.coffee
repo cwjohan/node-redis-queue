@@ -1,6 +1,6 @@
 'use strict'
 ###
-QueueMgr Example -- provider02
+Channel Example -- provider02
 
 For each URL in the urls list, this app puts a work request in 'urlq' queue
 consumed by worker02 and waits for the results to be returned in 'urlshaq01'
@@ -27,7 +27,7 @@ Example usage:
 Use this app in conjunction with worker02.js. See the worker02 source code
 for more details.
 ###
-QueueMgr = require('node-redis-queue').QueueMgr
+Channel = require('node-redis-queue').Channel
 urlQueueName = 'urlq'
 providerId = process.argv[2]
 unless providerId
@@ -44,26 +44,26 @@ urls = [
 ]
 resultsExpected = 0
 
-qmgr = new QueueMgr()
-qmgr.connect ->
+channel = new Channel()
+channel.connect ->
   console.log 'connected'
   initEventHandlers()
   main()
 
 initEventHandlers = ->
-  qmgr.on 'end', ->
+  channel.on 'end', ->
     console.log 'provider01 finished'
     shutDown()
 
-  qmgr.on 'error', (error) ->
+  channel.on 'error', (error) ->
     console.log 'provider01 stopping due to: ' + error
     shutDown()
 
 main = ->
   if clearInitially
-    qmgr.clear urlQueueName, ->
+    channel.clear urlQueueName, ->
       console.log 'Cleared "' + urlQueueName + '"'
-      qmgr.clear resultQueueName, ->
+      channel.clear resultQueueName, ->
         console.log 'Cleared "' + resultQueueName + '"'
         shutDown()
   else
@@ -71,24 +71,24 @@ main = ->
       enqueueURLs()
     else
       console.log 'Stopping worker'
-      qmgr.push urlQueueName, '***stop***'
+      channel.push urlQueueName, '***stop***'
       shutDown()
 
 enqueueURLs = ->
   for url in urls
     console.log 'Pushing "' + url + '"'
-    qmgr.push urlQueueName, {url: url, q: resultQueueName}
+    channel.push urlQueueName, {url: url, q: resultQueueName}
     ++resultsExpected
-  qmgr.pop resultQueueName, onData
+  channel.pop resultQueueName, onData
   console.log 'waiting for responses from worker...'
 
 onData = (result) ->
   console.log 'result = ', result
   if --resultsExpected
-    qmgr.pop resultQueueName, onData
+    channel.pop resultQueueName, onData
   else
     shutDown()
 
 shutDown = ->
-  qmgr.end()
+  channel.end()
   process.exit()

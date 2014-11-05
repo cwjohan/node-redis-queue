@@ -1,4 +1,4 @@
-exports.QueueMgr =  require('./lib/queueMgr').qmgr;
-exports.WorkQueue = require('./lib/workQueueBroker').queue;
-exports.WorkQueueBroker = require('./lib/workQueueBroker').broker;
+exports.Channel =  require('./lib/channel').channel;
+exports.WorkQueue = require('./lib/workQueueMgr').queue;
+exports.WorkQueueMgr = require('./lib/workQueueMgr').mgr;
 

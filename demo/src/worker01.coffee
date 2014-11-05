@@ -1,6 +1,6 @@
 'use strict'
 ###
-QueueMgr Example -- worker01
+Channel Example -- worker01
 
 This app waits for URLs to become available in the 'urlq' queue, as provided
 by worker01. Then, for each one it receives, the app gets the page for the URL,
@@ -16,24 +16,24 @@ Usage:
 Use this app in conjunction with provider01.js. See the provider01 source code
 for more details.
 ###
-QueueMgr = require('node-redis-queue').QueueMgr
+Channel = require('node-redis-queue').Channel
 request = require 'request'
 SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1
 urlQueueName = 'urlq'
-qmgr = null
+channel = null
 
-qmgr = new QueueMgr()
-qmgr.connect ->
+channel = new Channel()
+channel.connect ->
   initEventHandlers()
-  qmgr.pop urlQueueName, onData
+  channel.pop urlQueueName, onData
   console.log 'Waiting for data...'
 
 initEventHandlers = ->
-  qmgr.on 'end', () ->
+  channel.on 'end', () ->
     console.log 'worker01 detected Redis connection ended'
     shutDown()
 
-  qmgr.on 'error', (error) ->
+  channel.on 'error', (error) ->
     console.log 'worker01 stopping due to: ' + error
     shutDown()
 
@@ -48,7 +48,7 @@ onData = (url) ->
       if not error and response.statusCode is 200
         sha1 = SHA1 body
         console.log url + ' SHA1 = ' + sha1
-        qmgr.pop urlQueueName, onData
+        channel.pop urlQueueName, onData
       else
         console.log error
       return
@@ -56,7 +56,7 @@ onData = (url) ->
     console.log 'Unexpected message: ', url
 
 shutDown = ->
-  qmgr.end()
+  channel.end()
   process.exit()
 
 
