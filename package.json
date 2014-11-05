@@ -1,6 +1,6 @@
 {
     "name": "node-redis-queue",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "A simple, lightweight queue using Redis lpush and brpop",
     "main": "lib/index.js",
     "repository": {
@@ -38,4 +38,3 @@
         "compile-test": "node_modules/.bin/coffee -c -o test test"
     }
 }
-

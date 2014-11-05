@@ -76,7 +76,7 @@ See the Javascript usage examples [here](JAVASCRIPT_USAGE_EXAMPLES.md).
 
 ##Running the demos
 
-Instructions for running the demo code may be found [here](demos/HOW_TO_RUN_DEMOS.md).
+Instructions for running the demo code may be found [here](demo/HOW_TO_RUN_DEMOS.md).
 
 ##Developer Info
 

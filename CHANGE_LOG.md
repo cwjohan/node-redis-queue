@@ -56,6 +56,8 @@ Added @outstanding to queueMgr class. worker04 example uses a second WorkQueueBr
 greater than 1 to send result back to provider04.
 
 **v0.2.0**: Renamed QueueMgr class to Channel. Renamed WorkQueueBroker class to WorkQueueMgr. Updated test
-and demo code to use the new class names, which have been adopted to correspond better to what they represent.
+and demo code to use the new class names. Hopefully, these make more sense.
 The README.md file has been split up into several separate files to improve readability.
+
+**v0.2.1**: Very minor update to the README.md to make it link to the HOW_TO_RUN_DEMOS.md file.
 
