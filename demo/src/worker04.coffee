@@ -67,7 +67,7 @@ consumeUrlQueue = ->
           ack()
         else
           console.log '>>>error: ', error
-          mgr2.channel.push req.q, {url: req.url, err: error}
+          mgr2.send req.q, {url: req.url, err: error}
           shutDown()
     else
       if typeof req is 'string' and req is '***stop***'

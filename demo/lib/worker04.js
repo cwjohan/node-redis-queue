@@ -86,7 +86,7 @@ consumeUrlQueue = function() {
           return ack();
         } else {
           console.log('>>>error: ', error);
-          mgr2.channel.push(req.q, {
+          mgr2.send(req.q, {
             url: req.url,
             err: error
           });
