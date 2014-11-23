@@ -22,7 +22,7 @@ var Channel, channel, clearInitially, enqueueURLs, initEventHandlers, main, stop
 
 Channel = require('node-redis-queue').Channel;
 
-urlQueueName = 'urlq';
+urlQueueName = 'demo:urlq';
 
 channel = null;
 

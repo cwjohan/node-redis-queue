@@ -3,7 +3,7 @@
 /*
 WorkQueueMgr Example -- worker03
 
-This program consumes two work queues: 'work-queue-1' and 'work-queue-2'.
+This program consumes two work queues: 'demo:work-queue-1' and 'demo:work-queue-2'.
 It simply prints each message consumed and then "acks" it, so that the
 next message will become available. Each work queue operates independently.
 
@@ -19,11 +19,15 @@ Use this program in conjunction with provider03. See provider03 source code
 for more details.
 */
 
-var WorkQueueMgr, checkArgs, consumeData, createWorkQueues, initEventHandlers, mgr, queue1, queue2, queuesActive, shutDown;
+var WorkQueueMgr, checkArgs, consumeData, createWorkQueues, initEventHandlers, mgr, queue1, queue1Name, queue2, queue2Name, queuesActive, shutDown;
 
 queue1 = null;
 
 queue2 = null;
+
+queue1Name = 'demo:work-queue-1';
+
+queue2Name = 'demo:work-queue-2';
 
 mgr = null;
 
@@ -68,23 +72,23 @@ initEventHandlers = function() {
 };
 
 createWorkQueues = function() {
-  queue1 = mgr.createQueue('work-queue-1');
-  queue2 = mgr.createQueue('work-queue-2');
+  queue1 = mgr.createQueue(queue1Name);
+  queue2 = mgr.createQueue(queue2Name);
   queuesActive = 2;
 };
 
 consumeData = function() {
-  console.log('consuming queue "work-queue-1"');
+  console.log('consuming queue "' + queue1.queueName + '"');
   queue1.consume(function(payload, ack) {
-    console.log('received message "' + payload + '" in queue "work-queue-1"');
+    console.log('received message "' + payload + '" in queue "' + queue1.queueName + '"');
     ack(payload === '***stop***');
     if (payload === '***stop***' && --queuesActive === 0) {
       return mgr.end();
     }
   });
-  console.log('consuming queue "work-queue-2"');
+  console.log('consuming queue "' + queue2.queueName + '"');
   return queue2.consume(function(payload, ack) {
-    console.log('received message "' + payload + '" in queue "work-queue-2"');
+    console.log('received message "' + payload + '" in queue "' + queue2.queueName + '"');
     ack(payload === '***stop***');
     if (payload === '***stop***' && --queuesActive === 0) {
       return mgr.end();

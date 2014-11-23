@@ -61,3 +61,10 @@ The README.md file has been split up into several separate files to improve read
 
 **v0.2.1**: Very minor update to the README.md to make it link to the HOW_TO_RUN_DEMOS.md file.
 
+**v0.2.2**: To the Channel class, added new functions `popTimeout` and `popAnyTimeout` that accept a timeout
+parameter. To the WorkQueueMgr class `consume` method, added an
+optional timeout, which defaults to 0.
+The Channel and WorkQueueMgr classes now both emit 'drain' and 'timeout' events. Made several WorkQueueMgr methods private:
+send, consume, destroy, and ensureValidQueueName. Really, these were not meant to be used externally.
+One is supposed to do those operations via the WorkQueue instance. Dropped useless isValidQueueName method.
+

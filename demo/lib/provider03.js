@@ -4,7 +4,7 @@
 WorkQueueMgr Example -- provider03
 
 For each string in the two expectedItems lists, this app sends it
-into either 'work-queue-1' or 'work-queue-2' for consumption by worker03.
+into either 'demo:work-queue-1' or 'demo:work-queue-2' for consumption by worker03.
 When done with that, it quits.
 
 Usage:
@@ -20,11 +20,15 @@ Use this app in conjunction with worker03.js. See the worker03 source code
 for more details.
 */
 
-var WorkQueueMgr, clear, clearWorkQueues, createWorkQueues, expectedItemsQ1, expectedItemsQ2, initEventHandlers, itemCntQ1, itemCntQ2, mgr, queue1, queue2, sendData, sendStop, shutDown, stop, timesToRepeat;
+var WorkQueueMgr, clear, clearWorkQueues, createWorkQueues, expectedItemsQ1, expectedItemsQ2, initEventHandlers, itemCntQ1, itemCntQ2, mgr, queue1, queue1Name, queue2, queue2Name, sendData, sendStop, shutDown, stop, timesToRepeat;
 
 queue1 = null;
 
 queue2 = null;
+
+queue1Name = 'demo:work-queue-1';
+
+queue2Name = 'demo:work-queue-2';
 
 mgr = null;
 
@@ -75,21 +79,21 @@ initEventHandlers = function() {
 };
 
 createWorkQueues = function() {
-  queue1 = mgr.createQueue('work-queue-1');
-  queue2 = mgr.createQueue('work-queue-2');
+  queue1 = mgr.createQueue(queue1Name);
+  queue2 = mgr.createQueue(queue2Name);
 };
 
 clearWorkQueues = function(done) {
   var queuesToClear;
   queuesToClear = 2;
   queue1.clear(function() {
-    console.log('Cleared "work-queue-1"');
+    console.log('Cleared "' + queue1.queueName + '"');
     if (!--queuesToClear) {
       return done();
     }
   });
   return queue2.clear(function() {
-    console.log('Cleared "work-queue-2"');
+    console.log('Cleared "' + queue2.queueName + '"');
     if (!--queuesToClear) {
       return done();
     }
@@ -101,12 +105,12 @@ sendData = function() {
   while (timesToRepeat--) {
     for (_i = 0, _len = expectedItemsQ1.length; _i < _len; _i++) {
       item = expectedItemsQ1[_i];
-      console.log('publishing "' + item + '" to queue "work-queue-1"');
+      console.log('publishing "' + item + '" to queue "' + queue1.queueName + '"');
       queue1.send(item);
     }
     for (_j = 0, _len1 = expectedItemsQ2.length; _j < _len1; _j++) {
       item = expectedItemsQ2[_j];
-      console.log('publishing "' + item + '" to queue "work-queue-2"');
+      console.log('publishing "' + item + '" to queue "' + queue2.queueName + '"');
       queue2.send(item);
     }
   }

@@ -3,7 +3,7 @@
 /*
 WorkQueueMgr Example -- worker04
 
-This app consumes work requests that become available in the 'urlq' queue,
+This app consumes work requests that become available in the 'demo:urlq' queue,
 as provided by provider04. For each one it receives, this app computes an
 SHA1 value on the request URL (req.url) and outputs that and the request
 URL value (req.url) to the result queue (req.q) specified in the work request.
@@ -19,12 +19,16 @@ Usage:
  or
    node worker04.js 3
  to demonstrate arity feature.
+ or
+   node worker04.js 1 5
+ to demonstrate the timeout feature.
+
 
 Use this app in conjunction with provider04.js. See the provider04 source code
 for more details.
 */
 
-var SHA1, WorkQueueMgr, arity, consumeUrlQueue, createUrlQueue, initEventHandlers, mgr, mgr2, request, shutDown, urlQueue, urlQueueName;
+var SHA1, WorkQueueMgr, arity, consumeUrlQueue, createUrlQueue, initEventHandlers, mgr, mgr2, request, shutDown, timeout, urlQueue, urlQueueName;
 
 WorkQueueMgr = require('node-redis-queue').WorkQueueMgr;
 
@@ -32,11 +36,15 @@ request = require('request');
 
 SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1;
 
-urlQueueName = 'urlq';
+urlQueueName = 'demo:urlq';
 
 urlQueue = null;
 
 arity = parseInt(process.argv[2]) || 1;
+
+timeout = parseInt(process.argv[3]) || 0;
+
+console.log('arity=' + arity + ', timeout=' + timeout);
 
 mgr = new WorkQueueMgr();
 
@@ -60,9 +68,12 @@ initEventHandlers = function() {
     console.log('worker04 detected Redis connection ended');
     return shutDown();
   });
-  return mgr.on('error', function(error) {
+  mgr.on('error', function(error) {
     console.log('worker04 stopping due to: ' + error);
     return shutDown();
+  });
+  return mgr.on('timeout', function(keys, cancel) {
+    return console.log('>>>timeout, keys=', keys);
   });
 };
 
@@ -86,11 +97,11 @@ consumeUrlQueue = function() {
           return ack();
         } else {
           console.log('>>>error: ', error);
-          mgr2.send(req.q, {
+          mgr2.channel.push(req.q, {
             url: req.url,
             err: error
           });
-          return shutDown();
+          return ack();
         }
       });
     } else {
@@ -100,9 +111,9 @@ consumeUrlQueue = function() {
       }
       console.log('Unexpected message: ', req);
       console.log('Type of message = ' + typeof req);
-      return ack();
+      return shutDown();
     }
-  }, arity);
+  }, arity, timeout);
 };
 
 shutDown = function() {

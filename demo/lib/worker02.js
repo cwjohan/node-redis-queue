@@ -27,7 +27,7 @@ request = require('request');
 
 SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1;
 
-urlQueueName = 'urlq';
+urlQueueName = 'demo:urlq';
 
 channel = new Channel();
 

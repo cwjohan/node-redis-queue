@@ -23,6 +23,7 @@ debug = process.env.DEBUG
 verbose = debug || process.env.VERBOSE
 
 describe '===WorkQueueMgr send/consume===', ->
+  @timeout 3000 ## 3 seconds
   it 'must connect to redis-server', (done) ->
     mgr = new WorkQueueMgr()
     mgr.connect ->
@@ -48,7 +49,7 @@ describe '===WorkQueueMgr send/consume===', ->
       console.log 'Cleared "' + queue2Name + '"' if verbose
       done() unless --queuesToClear
 
-  it 'receives all published data from given queues (no interleaving)', (done) ->
+  it 'receives all published data from given queues', (done) ->
     itemsInQueues = 0
 
     for item in expectedItemsQ1
@@ -63,7 +64,7 @@ describe '===WorkQueueMgr send/consume===', ->
       queue2.send item
       ++itemsInQueues
 
-    console.log 'consuming queue "test-queue-1"' if verbose
+    console.log 'consuming queue "' + queue1.queueName + '"' if verbose
     itemCntQ1 = 0
     queue1.consume (data, ack) ->
       console.log 'received message "' + data + '" in queue "' + queue1Name + '"' \
@@ -72,7 +73,7 @@ describe '===WorkQueueMgr send/consume===', ->
       done() unless --itemsInQueues
       ack itemCntQ1 >= expectedItemsQ1.length
 
-    console.log 'consuming queue "test-queue-2"' if verbose
+    console.log 'consuming queue "' + queue2.queueName + '"' if verbose
     itemCntQ2 = 0
     queue2.consume (data, ack) ->
       console.log 'received message "' + data + '" in queue "' + queue2Name + '"' \
@@ -81,68 +82,18 @@ describe '===WorkQueueMgr send/consume===', ->
       done() unless --itemsInQueues
       ack itemCntQ2 >= expectedItemsQ2.length
 
-  it 'receives all published data from given queues (interleaving)', (done) ->
-    itemsInQueues = 0
+  it 'consume must time out if timeout specified and queue empty', (done) ->
+    mgr.once 'timeout', (keys, cancel) ->
+      console.log 'consume timed out, key=', keys if verbose
+      expect(keys).to.equal(queue1Name)
+      cancel() ## prevents outstanding popAnyTimeout
+      done()
 
-    for i in [0..Math.max(expectedItemsQ1.length, expectedItemsQ2.length)]
-      if i < expectedItemsQ1.length
-        console.log 'publishing "' + expectedItemsQ1[i] + '" to queue "' + queue1Name +
-                    '"' if verbose
-        queue1.send expectedItemsQ1[i]
-        ++itemsInQueues
-      if i < expectedItemsQ2.length
-        console.log 'publishing "' + expectedItemsQ2[i] + '" to queue "' + queue2Name +
-                    '"' if verbose
-        queue2.send expectedItemsQ2[i]
-        ++itemsInQueues
-    
-    console.log 'commandQueueLength = ' + mgr.commandQueueLength() if verbose
-    expect(mgr.commandQueueLength()).to.be.above(0)
-    expect(mgr.commandQueueLength()).to.be.at.most(itemsInQueues)
-
-    isEven = (n) -> n % 2 is 0
-
-    console.log 'consuming queue "test-queue-1"' if verbose
-    itemCntQ1 = 0
     queue1.consume (data, ack) ->
-      console.log 'received message "' + data + '" in queue "' + queue1Name + '"' \
-        if verbose
-      expect(data).to.equal expectedItemsQ1[itemCntQ1++]
-      if isEven(itemCntQ1)
-        done() unless --itemsInQueues
-        if debug
-          console.log '>>>done Q1' unless itemsInQueues
-          console.log '>>>ack Q1'
-        ack itemCntQ1 >= expectedItemsQ1.length
-      else
-        setTimeout ->
-          done() unless --itemsInQueues
-          if debug
-            console.log '>>>done Q1' unless itemsInQueues
-            console.log '>>>ack Q1 timeout'
-          ack itemCntQ1 >= expectedItemsQ1.length
-        ,10
-
-    console.log 'consuming queue "test-queue-2"' if verbose
-    itemCntQ2 = 0
-    queue2.consume (data, ack) ->
-      console.log 'received message "' + data + '" in queue "' + queue2Name +
-                  '"'  if verbose
-      expect(data).to.equal expectedItemsQ2[itemCntQ2++]
-      if isEven(itemCntQ2)
-        done() unless --itemsInQueues
-        if debug
-          console.log '>>>done Q2' unless itemsInQueues
-          console.log '>>>ack Q2'
-        ack itemCntQ2 >= expectedItemsQ2.length
-      else
-        setTimeout ->
-          done() unless --itemsInQueues
-          if debug
-            console.log '>>>done Q2' unless itemsInQueues
-            console.log '>>>ack Q2 timeout'
-          ack itemCntQ2 >= expectedItemsQ2.length
-        ,10
+      console.log '>>>SHOULD NOT GET HERE, data=', data
+      ack()
+      return
+    , 1, 1
 
   it 'must be able to schedule multiple async jobs in parallel', (done) ->
     for item in expectedItemsQ1
@@ -160,6 +111,7 @@ describe '===WorkQueueMgr send/consume===', ->
         if ++itemsProcessed is expectedItemsQ1.length
           expect(maxCnt).to.equal arity
           ack(true)
+          console.log 'outstanding popAnyTimeout operations=' + mgr.channel.outstanding if verbose
           done()
         else
           ack()
@@ -178,5 +130,5 @@ describe '===WorkQueueMgr send/consume===', ->
   it 'quits Redis cleanly', ->
     # We don't need to call process exit because the process will quit if no outstanding i/o.
     console.log 'Ending work queue manager test' if verbose
-    expect(mgr.end()).to.equal true
+    expect(mgr.end()).to.be.an 'object'
 

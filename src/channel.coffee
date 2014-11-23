@@ -32,48 +32,67 @@ class Channel extends events.EventEmitter
       @emit 'drain'
     return this
 
-  push: (key, data) ->
-    @client.lpush key, JSON.stringify(data)
+  push: (queueName, data) ->
+    @client.lpush queueName, JSON.stringify(data)
     return this
 
-  pop: (key, onData) ->
+  pop: (queueName, onData) ->
+    @popTimeout queueName, 0, onData
+    return this
+
+  popTimeout: (queueName, timeout, onData) ->
     ++@outstanding
-    @client.brpop key, 0, (err, replies) =>
+    @client.brpop queueName, timeout, (err, replies) =>
       --@outstanding
       if err?
-        @emit 'error', err
-      else
-        if replies? and replies instanceof Array and replies.length is 2
+        @emit 'error', err ## generally fatal
+        return
+      if replies?
+        if replies instanceof Array and replies.length is 2
           onData(JSON.parse(replies[1])) if onData
-        else
-          if replies?
-            @emit 'error', new ChannelError 'Replies not Array of two elements'
+          return
+        @emit 'error', new ChannelError 'Replies not Array of two elements'
+        return
+      @cancel = false
+      @emit 'timeout', queueName, => @cancel = true
+      return if @cancel
+      @popTimeout queueName, timeout, onData
     return this
 
-  popAny: (keys..., onData) ->
+  popAny: (queueNames..., onData) ->
+    @popAnyTimeout queueNames..., 0, onData
+    return this
+
+  popAnyTimeout: (queueNames..., timeout, onData) ->
     ++@outstanding
-    @client.brpop keys..., 0, (err, replies) =>
+    @client.brpop queueNames..., timeout, (err, replies) =>
       --@outstanding
       if err?
-        @emit 'error', err
-      else
-        if replies? and replies instanceof Array and replies.length is 2
+        @emit 'error', err ## generally fatal
+        return
+      if replies?
+        if replies instanceof Array and replies.length is 2
           onData(replies[0], JSON.parse(replies[1])) if onData
-        else
-          if replies?
-            @emit 'error', new ChannelError 'Replies not Array of two elements'
+          return
+        @emit 'error', new ChannelError 'Replies not Array of two elements'
+        return
+      @cancel = false
+      @emit 'timeout', queueNames..., => @cancel = true
+      return if @cancel
+      @popAnyTimeout queueNames..., timeout, onData
     return this
 
-  clear: (keysToClear..., onClear) ->
-    @client.del keysToClear..., onClear
+  clear: (queueNamesToClear..., onClear) ->
+    @client.del queueNamesToClear..., onClear
+    return this
 
   disconnect: ->
     @client.quit()
-    true
+    return this
 
   end: ->
     @client.end()
-    true
+    return this
 
   shutdownSoon: (delay) ->
     process.nextTick =>
@@ -83,6 +102,7 @@ class Channel extends events.EventEmitter
         setTimeout =>
           @shutdownSoon delay
         , delay or 500
+    return this
 
   commandQueueLength: ->
     @client.command_queue.length

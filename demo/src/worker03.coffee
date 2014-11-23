@@ -2,7 +2,7 @@
 ###
 WorkQueueMgr Example -- worker03
 
-This program consumes two work queues: 'work-queue-1' and 'work-queue-2'.
+This program consumes two work queues: 'demo:work-queue-1' and 'demo:work-queue-2'.
 It simply prints each message consumed and then "acks" it, so that the
 next message will become available. Each work queue operates independently.
 
@@ -19,6 +19,8 @@ for more details.
 ###
 queue1 = null
 queue2 = null
+queue1Name = 'demo:work-queue-1'
+queue2Name = 'demo:work-queue-2'
 mgr = null
 queuesActive = 0
 
@@ -51,21 +53,21 @@ initEventHandlers = ->
     shutDown()
 
 createWorkQueues = ->
-  queue1 = mgr.createQueue 'work-queue-1'
-  queue2 = mgr.createQueue 'work-queue-2'
+  queue1 = mgr.createQueue queue1Name
+  queue2 = mgr.createQueue queue2Name
   queuesActive = 2
   return
 
 consumeData = ->
-  console.log 'consuming queue "work-queue-1"'
+  console.log 'consuming queue "' + queue1.queueName + '"'
   queue1.consume (payload, ack) ->
-    console.log 'received message "' + payload + '" in queue "work-queue-1"'
+    console.log 'received message "' + payload + '" in queue "' + queue1.queueName + '"'
     ack payload is '***stop***'
     mgr.end() if payload is '***stop***' and --queuesActive is 0
 
-  console.log 'consuming queue "work-queue-2"'
+  console.log 'consuming queue "' + queue2.queueName + '"'
   queue2.consume (payload, ack) ->
-    console.log 'received message "' + payload + '" in queue "work-queue-2"'
+    console.log 'received message "' + payload + '" in queue "' + queue2.queueName + '"'
     ack payload is '***stop***'
     mgr.end() if payload is '***stop***' and --queuesActive is 0
 

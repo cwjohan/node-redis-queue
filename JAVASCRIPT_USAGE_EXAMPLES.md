@@ -17,6 +17,10 @@
           myMainLogic();
         });
 
+  Alternatively, you can provide an existing Redis connection (i.e., a redis client instance)
+
+        channel.attach(redisConn);
+
 1. Optionally, handle error events
 
         channel.on('error', function(error) {  
@@ -29,6 +33,18 @@
         channel.on('end', function() {
           console.log('Connection lost');
         });
+
+1. Optionally, handle drain events
+
+        channel.on('drain', function() {
+          console.log('Command queue too full -- slowing input');
+          throttleInput();
+        });
+
+1. Optionally, handle timeout events
+
+        channel.on 'timeout', (queueNames...) ->
+          console.log 'Timed out waiting for ', queueNames
 
 1. Optionally, clear previous data from the queue, providing a callback.
 
@@ -57,11 +73,25 @@
    Once popping data from a queue, avoid pushing data to the same queue from the same connection, since
    a hang could result. This appears to be a Redis limitation when using blocking reads.
 
+1. To avoid blocking indefinitely there are variations of the above that accept a timeout parameter.
+
+        channel.popTimeout(queueName, timeout, function(myData) {
+            console.log('data = ' + myData);
+        });
+
+   or, alternatively, pop off any of multiple queues
+
+        channel.popAnyTimeout(queueName1, queueName2, timeout, function(myData) {
+            console.log('data = ' + myData);
+        });
+
+   where the timeout is in seconds.
+
 1. When done, quit the Channel instance
 
         channel.disconnect();
 
-  or, alternatively, if monitoring, end the connection
+  or, alternatively, if consuming data from the queue, end the connection
 
         channel.end();
 
@@ -104,6 +134,19 @@
           console.log('Connection lost');
         });
 
+1. Optionally, handle drain events
+
+        mgr.on('drain', function() {
+          console.log('Command queue too full -- slowing input');
+          throttleInput();
+        });
+
+1. Optionally, handle timeout events
+
+        mgr.on('timeout', function(queueNames...) {
+          console.log('Timed out waiting for ', queueNames);
+        });
+
 1. Create a work queue instance
 
         var queue = mgr.createQueue(queueName);
@@ -113,6 +156,13 @@
 
         queue.clear(queueName, function() {
           console.log('cleared');
+          doImportantStuff();
+        });
+
+   Alternatively, you can clear multiple queues at once.
+
+        mgr.clear(queueName1, queueName2, function() {
+          console.log('cleared both queues');
           doImportantStuff();
         });
 
@@ -146,6 +196,8 @@
    Once consuming from a queue, avoid sending data to the same queue from the same connection (i.e., the same mgr instance),
    since a hang could result. This appears to be a Redis limitation when using blocking reads. You can test
    `mgr.channel.outstanding` for zero to determine if it is OK to send on the same connection.
+
+   Following the arity parameter, one may provide a timeout parameter so that the operations do not block indefinitely.
 
 1. Optionally, destroy a work queue if it no longer is needed. Assign null to the queue variable to free up memory.
 

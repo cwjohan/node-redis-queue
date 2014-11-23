@@ -3,7 +3,7 @@
 WorkQueueMgr Example -- provider03
 
 For each string in the two expectedItems lists, this app sends it
-into either 'work-queue-1' or 'work-queue-2' for consumption by worker03.
+into either 'demo:work-queue-1' or 'demo:work-queue-2' for consumption by worker03.
 When done with that, it quits.
 
 Usage:
@@ -20,6 +20,8 @@ for more details.
 ###
 queue1 = null
 queue2 = null
+queue1Name = 'demo:work-queue-1'
+queue2Name = 'demo:work-queue-2'
 mgr = null
 expectedItemsQ1 = [
     'item one',
@@ -64,27 +66,27 @@ initEventHandlers = ->
     shutDown()
 
 createWorkQueues = ->
-  queue1 = mgr.createQueue 'work-queue-1'
-  queue2 = mgr.createQueue 'work-queue-2'
+  queue1 = mgr.createQueue queue1Name
+  queue2 = mgr.createQueue queue2Name
   return
 
 clearWorkQueues = (done) ->
   queuesToClear = 2
   queue1.clear () ->
-    console.log 'Cleared "work-queue-1"'
+    console.log 'Cleared "' + queue1.queueName + '"'
     done() unless --queuesToClear
   queue2.clear () ->
-    console.log 'Cleared "work-queue-2"'
+    console.log 'Cleared "' + queue2.queueName + '"'
     done() unless --queuesToClear
 
 sendData = ->
   while timesToRepeat--
     for item in expectedItemsQ1
-      console.log 'publishing "' + item + '" to queue "work-queue-1"'
+      console.log 'publishing "' + item + '" to queue "' + queue1.queueName + '"'
       queue1.send item
 
     for item in expectedItemsQ2
-      console.log 'publishing "' + item + '" to queue "work-queue-2"'
+      console.log 'publishing "' + item + '" to queue "' + queue2.queueName + '"'
       queue2.send item
   return
 

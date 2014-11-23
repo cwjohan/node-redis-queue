@@ -1,6 +1,6 @@
 {
     "name": "node-redis-queue",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "description": "A simple, lightweight queue using Redis lpush and brpop",
     "main": "lib/index.js",
     "repository": {
@@ -30,7 +30,8 @@
         "grunt-contrib-jshint": "^0.10.0",
         "grunt-mocha-test": "^0.12.2",
         "memwatch": "~0.2.2",
-        "mocha": "^1.21.5"
+        "mocha": "^1.21.5",
+        "request": "^2.47.0"
     },
     "scripts": {
         "test": "node_modules/.bin/mocha -R spec --compilers coffee:coffee-script/register test",

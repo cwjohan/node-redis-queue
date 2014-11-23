@@ -19,11 +19,12 @@ expectedItems2 = [
 ]
 
 describe '===Channel push/pop===', ->
+  @timeout 3000  ## 3 seconds 
   it 'must connect to redis-server', (done) ->
     channel = new Channel
     channel.connect ->
       console.log 'push/pop queue channel ready' if verbose
-      expect(channel).to.be.a('object')
+      expect(channel).to.be.a 'object'
       expect(channel.push).to.be.a 'function'
 
       channel.on 'error', (error) ->
@@ -87,7 +88,26 @@ describe '===Channel push/pop===', ->
           consume()
     consume()
 
+  it 'popTimeout must time out if timeout specified and queue empty', (done) ->
+    channel.once 'timeout', (key, cancel) ->
+      console.log 'popTimeout timed out, key=' + key if verbose
+      expect(key).to.equal queueName1
+      cancel() ## prevents another popTimeout
+      done()
+
+    channel.popTimeout queueName1, 1, ->
+      return
+
+  it 'popAnyTimeout must time out if timeout specified and queue empty', (done) ->
+    channel.once 'timeout', (keys, cancel) ->
+      console.log 'popAnyTimeout timed out, keys=' + keys if verbose
+      expect(keys).to.equal queueName2
+      cancel() ## prevents another popAnyTimeout
+      done()
+
+    channel.popAnyTimeout queueName2, 1, -> return
+
   it 'quits cleanly', ->
     console.log 'Ending Channel push/pop test' if verbose
-    expect(channel.end()).to.equal true
+    expect(channel.end()).to.be.a 'object'
 

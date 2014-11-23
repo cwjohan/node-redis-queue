@@ -17,7 +17,7 @@ Use this app in conjunction with worker01.js. See the worker01 source code
 for more details.
 ###
 Channel = require('node-redis-queue').Channel
-urlQueueName = 'urlq'
+urlQueueName = 'demo:urlq'
 channel = null
 clearInitially = process.argv[2] is 'clear'
 stopWorker = process.argv[2] is 'stop'

@@ -2,7 +2,7 @@
 ###
 Channel Example -- worker01
 
-This app waits for URLs to become available in the 'urlq' queue, as provided
+This app waits for URLs to become available in the 'demo:urlq' queue, as provided
 by worker01. Then, for each one it receives, the app gets the page for the URL,
 computes an SHA1 value, and outputs it to the console log.
 However, if it receives a '***stop***' message, it closes the connection and
@@ -19,7 +19,7 @@ for more details.
 Channel = require('node-redis-queue').Channel
 request = require 'request'
 SHA1 = require('../lib/helpers/tinySHA1.r4.js').SHA1
-urlQueueName = 'urlq'
+urlQueueName = 'demo:urlq'
 channel = null
 
 channel = new Channel()

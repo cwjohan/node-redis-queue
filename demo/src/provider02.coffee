@@ -2,8 +2,8 @@
 ###
 Channel Example -- provider02
 
-For each URL in the urls list, this app puts a work request in 'urlq' queue
-consumed by worker02 and waits for the results to be returned in 'urlshaq01'
+For each URL in the urls list, this app puts a work request in 'demo:urlq' queue
+consumed by worker02 and waits for the results to be returned in 'demo:urlshaq01'
 or whatever, depending on the providerId parameter.
 
 Usage:
@@ -28,12 +28,12 @@ Use this app in conjunction with worker02.js. See the worker02 source code
 for more details.
 ###
 Channel = require('node-redis-queue').Channel
-urlQueueName = 'urlq'
+urlQueueName = 'demo:urlq'
 providerId = process.argv[2]
 unless providerId
   console.log 'Missing provider id argument'
   process.exit()
-resultQueueName = 'urlshaq' + providerId
+resultQueueName = 'demo:urlshaq' + providerId
 clearInitially = process.argv[3] is 'clear'
 stopWorker = process.argv[2] is 'stop'
 urls = [

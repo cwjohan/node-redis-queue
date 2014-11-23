@@ -3,8 +3,8 @@
 /*
 WorkQueueMgr Example -- provider04
 
-For each URL in the urls list, this app puts a work request in 'urlq' queue to be
-consumed by worker04. It then waits for the results to be returned in 'urlshaq01'
+For each URL in the urls list, this app puts a work request in 'demo:urlq' queue to be
+consumed by worker04. It then waits for the results to be returned in 'demo:urlshaq01'
 or whatever result queue, depending on the providerId parameter.
 
 Usage:
@@ -29,11 +29,11 @@ Use this app in conjunction with worker02.js. See the worker02 source code
 for more details.
 */
 
-var WorkQueueMgr, clearInitially, clearQueues, consumeResultQueue, createWorkQueues, initEventHandlers, mgr, providerId, resultQueue, resultQueueName, resultQueueTimeout, resultsExpected, sendURLs, stopOneWorker, stopWorker, urlQueue, urlQueueName, urls;
+var WorkQueueMgr, clearInitially, clearQueues, consumeResultQueue, createWorkQueues, initEventHandlers, mgr, providerId, resultQueue, resultQueueName, resultsExpected, sendURLs, stopOneWorker, stopWorker, urlQueue, urlQueueName, urls;
 
 WorkQueueMgr = require('node-redis-queue').WorkQueueMgr;
 
-urlQueueName = 'urlq';
+urlQueueName = 'demo:urlq';
 
 urlQueue = null;
 
@@ -46,9 +46,7 @@ if (!providerId) {
   process.exit();
 }
 
-resultQueueName = 'urlshaq' + providerId;
-
-resultQueueTimeout = 1;
+resultQueueName = 'demo:urlshaq' + providerId;
 
 clearInitially = process.argv[3] === 'clear';
 
