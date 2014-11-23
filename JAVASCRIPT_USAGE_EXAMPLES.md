@@ -43,8 +43,9 @@
 
 1. Optionally, handle timeout events
 
-        channel.on 'timeout', (queueNames...) ->
-          console.log 'Timed out waiting for ', queueNames
+        channel.on('timeout', function(queueNames...) {
+          console.log('Timed out waiting for ', queueNames);
+        });
 
 1. Optionally, clear previous data from the queue, providing a callback.
 
