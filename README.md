@@ -235,7 +235,7 @@ Emitted when a connection to the Redis server has been lost.
 ####'timeout'
 
 Emitted when a timeout occurs on a popTimeout operation, popAnyTimeout operation,
-or on a consume operation with a timeout specified. The provided callback provided to
+or on a consume operation with a timeout specified. The callback provided to
 `on 'timeout'` receives two parameters:
 
 1. `queueNames` -- one or more queue names on which the operation was waiting
