@@ -43,8 +43,18 @@ environment variable. One accesses the constructor most typically by something l
 
 ####connect(onReadyCB)
 
-Obtains a Redis client connection using the config file information. Calls the given callback
-when the connection is ready.
+Obtains a single Redis client connection using the config file information. We refer to this as 'half-duplex' mode.
+This method calls the given callback when the connection is ready.
+The `client` property provides access to this connection, which is used internally for both
+push/send and pop/consume operations.
+
+####connect2(onReadyCB)
+
+Obtains two Redis client connections using the config file information. We refer to this as 'full-duplex' mode.
+This method calls the given callback when the connection is ready.
+The `client2` property is used internally for push/send, while the `client` property
+is used for pop/consume. Use this feature to avoid hangs on push/send when multiple pop/consume operations
+may be outstanding.
 
 ####attach(client)
 
@@ -98,6 +108,23 @@ specifies the interval at which the offline_queue_length will be checked. Defaul
 
 Returns the size of the Redis client's command queue (i.e., commands queued to be sent to Redis).
 
+###The public properties of the `Channel` class are:
+
+####client
+
+This is a Redis client connection used for both push/send and pop/consume operations if opened with `connect`.
+However, if opened with `connect2`, it is used only for pop/consume operations.
+
+####client2
+
+This also is a Redis client connection. If opened with `connect`, it is the same connection as the `client`
+property. However, if opened with `connect2`, it is a seperate connection used only for
+push/send operations.
+
+####outstanding
+
+This is a count of the number of pop/consume operations currently outstanding.
+
 ##Details of the WorkQueueMgr Interface
 
 This interface is implemented with two classes: `WorkQueue` and `WorkQueueMgr`. The `WorkQueue` class represents
@@ -114,7 +141,7 @@ Pushes data into the associated work queue.
 ####consume(onDataCB, arity, timeout)
 
 Consumes data that becomes available in the associated work queue. The arity and timeout parameters are optional
-and default to 1 and 0 respectively.
+and default to 1 and 0 respectively. A zero timeout implies indefinite blocking.
 
 ####clear(onClearCB)
 
@@ -139,8 +166,18 @@ environment variable. Creates an internal Channel instance.
 
 ####connect(onReadyCB)
 
-Obtains a Redis client connection using the config file information. Calls the given callback
-when the connection is ready.
+Obtains a single Redis client connection using the config file information. We refer to this as 'half-duplex' mode.
+This method calls the given callback when the connection is ready.
+The channel's `client` property provides access to this connection, which is used internally for both
+push/send and pop/consume operations.
+
+####connect2(onReadyCB)
+
+Obtains two Redis client connections using the config file information. We refer to this as 'full-duplex' mode.
+This method calls the given callback when the connection is ready.
+The channel's `client2` property is used internally for push/send, while the channel's `client` property
+is used for pop/consume. Use this feature to avoid hangs on push/send when multiple pop/consume operations
+may be outstanding.
 
 ####attach(client)
 
@@ -173,15 +210,27 @@ specifies the interval at which the offline_queue_length will be checked. Defaul
 
 Returns the size of the Redis client's command queue (i.e., commands queued to be sent to Redis).
 
+###The public properties of the `WorkQueueMgr` class are:
+
+####channel
+
+This property provides access to the internal Channel instance, which may have been opened in
+'half-duplex' mode or 'full-duplex' mode, depending on whether `connect` or `connect2` was used
+to open the channel.
+
+You may use the `channel` property, for example, to push response data to an arbitrary result queue when
+consuming a request queue where the request specifies the name of the response queue to use. The
+worker04 demo code shows how to do this.
+
 ##Events Emitted by Both Interfaces
 
 ####'error'
 
-Emitted when an error is reported by Redis
+Emitted when an error is reported by Redis.
 
 ####'end'
 
-Emitted when a connection to the Redis server has been lost
+Emitted when a connection to the Redis server has been lost.
 
 ####'timeout'
 
@@ -217,17 +266,26 @@ the local Redis server with no password. If you do nothing, that is what you get
 
 Currently implemented strategies are:
 
-* **connStrategyDefaultLocal** -- local Redis server, no password
+####connStrategyDefaultLocal
 
-* **connStrategyCustom** -- configurable host, port, and password; defaults to local Redis server, no password
+Local Redis server, no password
 
-* **connStrategyHerokuRedisCloud** -- host, port, and password specified by REDISCLOUD_URL environment variable; if not
-   set, then defaults to local Redis server, no password
+####connStrategyCustom
 
-* **connStrategyBlueMixRedisCloud** -- host, port, and password specified by VCAP_SERVICES environment variable; if not
-   set, then defaults to local Redis server, no password
+Configurable host, port, and password; defaults to local Redis server, no password
 
-redisQueueConfig determines which strategy is used to configure the client. It is easy to add your own strategy.
+####connStrategyHerokuRedisCloud
+
+Host, port, and password specified by REDISCLOUD_URL environment variable; if not
+set, then defaults to local Redis server, no password
+
+####connStrategyBlueMixRedisCloud
+
+Host, port, and password specified by VCAP_SERVICES environment variable; if not
+set, then defaults to local Redis server, no password
+
+Note that redisQueueConfig determines which strategy is used to configure the client.
+It is easy to add your own strategy.
 
 ##Usage
 
@@ -256,7 +314,7 @@ View the change log [here](CHANGE_LOG.md).
 
 The Channel class is a very thin wrapper around existing redis module functions. It delegates all its
 operations to that module. The Channel class uses different strategies to connect to redis.
-A config file specifies which strategy to use and also supplies options to redis.
+A config file specifies which strategy to use and also supplies options to the redis module.
 
 The WorkQueueMgr class serves as a factory for WorkQueue class instances.
 

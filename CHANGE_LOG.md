@@ -68,3 +68,11 @@ The Channel and WorkQueueMgr classes now both emit 'drain' and 'timeout' events.
 send, consume, destroy, and ensureValidQueueName. Really, these were not meant to be used externally.
 One is supposed to do those operations via the WorkQueue instance. Dropped useless isValidQueueName method.
 
+**v0.2.3**: Implemented the 'full-duplex' feature, an optional second Redis client connection that may
+be used to keep push/send operations separate from pop/consume operations. One opens the connection in
+'full-duplex' mode by calling `connect2` rather than `connect`. Updated the worker04 demo program
+to use the feature. Added a test case for this feature to the WorkQueueMgr test spec. The push and
+send operations now emit an 'error' event if there are multiple outstanding pop or consume operations
+outstanding. This signals when a hang likely would happen. If you get one of these errors, then use
+`connect2` rather than `connect`.
+

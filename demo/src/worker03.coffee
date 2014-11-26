@@ -27,7 +27,7 @@ queuesActive = 0
 WorkQueueMgr = require('node-redis-queue').WorkQueueMgr
 
 mgr = new WorkQueueMgr()
-mgr.connect () ->
+mgr.connect ->
   console.log 'work queue broker ready'
   checkArgs()
   initEventHandlers()

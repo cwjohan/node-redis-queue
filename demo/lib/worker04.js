@@ -28,7 +28,7 @@ Use this app in conjunction with provider04.js. See the provider04 source code
 for more details.
 */
 
-var SHA1, WorkQueueMgr, arity, consumeUrlQueue, createUrlQueue, initEventHandlers, mgr, mgr2, request, shutDown, timeout, urlQueue, urlQueueName;
+var SHA1, WorkQueueMgr, arity, consumeUrlQueue, createUrlQueue, initEventHandlers, mgr, onReady, request, shutDown, timeout, urlQueue, urlQueueName;
 
 WorkQueueMgr = require('node-redis-queue').WorkQueueMgr;
 
@@ -48,20 +48,21 @@ console.log('arity=' + arity + ', timeout=' + timeout);
 
 mgr = new WorkQueueMgr();
 
-mgr2 = arity > 1 ? new WorkQueueMgr() : mgr;
-
-mgr.connect(function() {
-  console.log('receive channel connected');
+onReady = function() {
+  console.log('channel connected');
   initEventHandlers();
-  if (mgr2 !== mgr) {
-    mgr2.connect(function() {
-      return console.log('send channel connected');
-    });
-  }
   createUrlQueue();
   consumeUrlQueue();
   return console.log('waiting for work...');
-});
+};
+
+if (arity === 1) {
+  console.log('connecting half-duplex');
+  mgr.connect(onReady);
+} else {
+  console.log('connecting full-duplex');
+  mgr.connect2(onReady);
+}
 
 initEventHandlers = function() {
   mgr.on('end', function() {
@@ -69,7 +70,8 @@ initEventHandlers = function() {
     return shutDown();
   });
   mgr.on('error', function(error) {
-    console.log('worker04 stopping due to: ' + error);
+    console.log('worker04 stopping due to error');
+    throw error;
     return shutDown();
   });
   return mgr.on('timeout', function(keys, cancel) {
@@ -90,14 +92,14 @@ consumeUrlQueue = function() {
         if (!error && response.statusCode === 200) {
           sha1 = SHA1(body);
           console.log('sending ' + req.url + ' SHA1 = ' + sha1, ' (' + mgr.channel.outstanding + ')');
-          mgr2.channel.push(req.q, {
+          mgr.channel.push(req.q, {
             url: req.url,
             sha1: sha1
           });
           return ack();
         } else {
           console.log('>>>error: ', error);
-          mgr2.channel.push(req.q, {
+          mgr.channel.push(req.q, {
             url: req.url,
             err: error
           });

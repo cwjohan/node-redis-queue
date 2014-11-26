@@ -8,13 +8,23 @@ class Channel extends events.EventEmitter
     configFilePath = process.env.QUEUE_CONFIG_FILE or
                      configFilePath or
                      '../redis-queue-config.json'
-    @configurator = require './redisQueueConfig'
-    @config = @configurator.getConfig(configFilePath)
+    @configurator_ = require './redisQueueConfig'
+    @config_ = @configurator_.getConfig(configFilePath)
     @outstanding = 0
 
   connect: (onReady) ->
-    @client = @configurator.getClient(@config)
+    @client2 = @client = @configurator_.getClient(@config_)
     @attach @client, onReady
+      
+  connect2: (onReady) ->
+    @client = @configurator_.getClient(@config_)
+    @client2 = @configurator_.getClient(@config_)
+    @readyCnt_ = 0
+    @attach @client, @onReady2_.bind(this, onReady)
+    @attach @client, @onReady2_.bind(this, onReady)
+
+  onReady2_: (onReady) ->
+    onReady() if ++@readyCnt_ is 2 and onReady and typeof onReady is 'function'
       
   attach: (@client, onReady) ->
     unless @client instanceof Object
@@ -33,7 +43,9 @@ class Channel extends events.EventEmitter
     return this
 
   push: (queueName, data) ->
-    @client.lpush queueName, JSON.stringify(data)
+    @emit 'error', new ChannelError('push while read outstanding on half-duplex channel') \
+      if @outstanding > 0 and @client is @client2
+    @client2.lpush queueName, JSON.stringify(data)
     return this
 
   pop: (queueName, onData) ->

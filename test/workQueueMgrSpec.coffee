@@ -3,6 +3,7 @@ queue1 = null
 queue2 = null
 queue1Name = 'test:work-queue-1'
 queue2Name = 'test:work-queue-2'
+queue3Name = 'test:work-queue-3'
 mgr = null
 expectedItemsQ1 = [
     'item one',
@@ -117,6 +118,46 @@ describe '===WorkQueueMgr send/consume===', ->
           ack()
       , 10
     , arity
+
+  it 'half-duplex channel must emit error when sending to self if multiple reads outstanding', (done) ->
+    # Relies on previous test leaving a couple of outstanding reads
+    expect(mgr.channel.outstanding).to.equal 2
+    maxCnt = expectedItemsQ1.length * 2
+    mgr.removeAllListeners 'error'
+    mgr.once 'error', (err) ->
+      expect(err.message).to.equal 'push while read outstanding on half-duplex channel'
+      done()
+    console.log 'sending ' + expectedItemsQ1[0] if verbose
+    queue1.send expectedItemsQ1[0]
+ 
+  it 'full duplex channel must be able to send to self even when multiple reads outstanding', (done) ->
+    maxCnt = expectedItemsQ1.length * 2
+    mgr2 = new WorkQueueMgr()
+    mgr2.once 'error', (err) ->
+      throw err ## shouldn't get here
+    mgr2.connect2 ->
+      queue3 = mgr2.createQueue queue3Name
+      queue3.clear ->
+        itemsSent = 0
+        for item in expectedItemsQ1
+          console.log 'sending ' + item if verbose
+          queue3.send item
+          ++itemsSent
+
+        arity = 3
+        itemsProcessed = 0
+        queue3.consume (data, ack) ->
+          console.log 'processing ' + data if verbose
+          if ++itemsProcessed is maxCnt
+            expect(itemsProcessed).to.equal itemsSent * 2
+            ack(true)
+            console.log 'outstanding popAnyTimeout operations=' + mgr.channel.outstanding if verbose
+            done()
+          else
+            console.log 'resending ' + data if verbose
+            queue3.send data
+            ack()
+        , arity
 
   it 'send/consume throw error if queue no longer exists', ->
     queue1.destroy()

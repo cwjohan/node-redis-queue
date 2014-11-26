@@ -36,17 +36,20 @@ timeout = parseInt(process.argv[3]) or 0
 console.log 'arity=' + arity + ', timeout=' + timeout
 
 mgr = new WorkQueueMgr()
-mgr2 = if arity > 1 then new WorkQueueMgr() else mgr
 
-mgr.connect ->
-  console.log 'receive channel connected'
+onReady = ->
+  console.log 'channel connected'
   initEventHandlers()
-  if mgr2 isnt mgr
-    mgr2.connect ->
-      console.log 'send channel connected'
   createUrlQueue()
   consumeUrlQueue()
   console.log 'waiting for work...'
+
+if arity is 1
+  console.log 'connecting half-duplex'
+  mgr.connect onReady
+else
+  console.log 'connecting full-duplex'
+  mgr.connect2 onReady
 
 initEventHandlers = ->
   mgr.on 'end', ->
@@ -54,7 +57,8 @@ initEventHandlers = ->
     shutDown()
 
   mgr.on 'error', (error) ->
-    console.log 'worker04 stopping due to: ' + error
+    console.log 'worker04 stopping due to error'
+    throw error
     shutDown()
 
   mgr.on 'timeout', (keys, cancel) ->
@@ -72,11 +76,11 @@ consumeUrlQueue = ->
         if not error and response.statusCode is 200
           sha1 = SHA1 body
           console.log 'sending ' + req.url + ' SHA1 = ' + sha1, ' (' + mgr.channel.outstanding + ')'
-          mgr2.channel.push req.q, {url: req.url, sha1: sha1}
+          mgr.channel.push req.q, {url: req.url, sha1: sha1}
           ack()
         else
           console.log '>>>error: ', error
-          mgr2.channel.push req.q, {url: req.url, err: error}
+          mgr.channel.push req.q, {url: req.url, err: error}
           ack()
     else
       if typeof req is 'string' and req is '***stop***'

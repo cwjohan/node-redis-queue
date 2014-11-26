@@ -37,6 +37,11 @@ class WorkQueueMgr extends events.EventEmitter
     @initEmitters_()
     return this
 
+  connect2: (onReady) ->
+    @channel.connect2 onReady
+    @initEmitters_()
+    return this
+
   attach: (@client) ->
     @channel.attach @client
     @initEmitters_()
