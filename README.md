@@ -56,9 +56,10 @@ The `client2` property is used internally for push/send, while the `client` prop
 is used for pop/consume. Use this feature to avoid hangs on push/send when multiple pop/consume operations
 may be outstanding.
 
-####attach(client)
+####attach(client, client2)
 
-This is an alternative to calling `connect`. It attaches to the given Redis client connection.
+This is an alternative to calling `connect`. It attaches to the given Redis client connection or connections.
+The `client2` parameter is optional and may be omitted.
 
 ####push(queueName, data)
 
@@ -88,8 +89,8 @@ Once data becomes available, it calls the callback with two parameters: a queue 
 
 ####clear(queueNames..., onClearCB)
 
-Removes the data from the queues specified by the given queue names. Calls the given callback when the
-operation is complete.
+Removes the data from the queues specified by the given queue names. Calls the given callback
+function once all the given queues have been cleared.
 
 ####disconnect()
 
@@ -179,9 +180,10 @@ The channel's `client2` property is used internally for push/send, while the cha
 is used for pop/consume. Use this feature to avoid hangs on push/send when multiple pop/consume operations
 may be outstanding.
 
-####attach(client)
+####attach(client, client2)
 
-This is an alternative to calling `connect`. It attaches to a given Redis client connection.
+This is an alternative to calling `connect`. It attaches to a given Redis client connection or connections.
+The `client2` parameter is optional and may be omitted.
 
 ####createQueue(queueName)
 
@@ -189,8 +191,14 @@ Returns a WorkQueue instance for the given queue name.
 
 ####clear(queueNames..., onClearCB)
 
-Removes the data from one or more queues specified by the given queue names. Calls the
-given callback when the operation is complete.
+Removes the data from one or more queues specified by the given queue names. Calls the given callback
+function once all the given queues have been cleared.
+
+####clearAll(onClearCB)
+
+Removes data from all the queues that have been created by this WorkQueueMgr instance
+and not subsequently destroyed. Calls the given callback function once all the queues
+have been cleared.
 
 ####disconnect()
 

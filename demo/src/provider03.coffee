@@ -51,7 +51,8 @@ mgr.connect () ->
     sendStop()
     shutDown()
   else if clear
-    clearWorkQueues ->
+    mgr.clearAll ->
+      console.log 'Cleared "' + queue1.queueName + '" and "' + queue2.queueName + '"'
       shutDown()
   else
     sendData()
@@ -69,15 +70,6 @@ createWorkQueues = ->
   queue1 = mgr.createQueue queue1Name
   queue2 = mgr.createQueue queue2Name
   return
-
-clearWorkQueues = (done) ->
-  queuesToClear = 2
-  queue1.clear () ->
-    console.log 'Cleared "' + queue1.queueName + '"'
-    done() unless --queuesToClear
-  queue2.clear () ->
-    console.log 'Cleared "' + queue2.queueName + '"'
-    done() unless --queuesToClear
 
 sendData = ->
   while timesToRepeat--

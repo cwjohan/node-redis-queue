@@ -119,7 +119,7 @@ describe '===WorkQueueMgr send/consume===', ->
       , 10
     , arity
 
-  it 'half-duplex channel must emit error when sending to self if multiple reads outstanding', (done) ->
+  it 'half-duplex channel must emit error when sending if multiple reads outstanding', (done) ->
     # Relies on previous test leaving a couple of outstanding reads
     expect(mgr.channel.outstanding).to.equal 2
     maxCnt = expectedItemsQ1.length * 2
@@ -130,7 +130,7 @@ describe '===WorkQueueMgr send/consume===', ->
     console.log 'sending ' + expectedItemsQ1[0] if verbose
     queue1.send expectedItemsQ1[0]
  
-  it 'full duplex channel must be able to send to self even when multiple reads outstanding', (done) ->
+  it 'full duplex channel must be able to send even when multiple reads outstanding', (done) ->
     maxCnt = expectedItemsQ1.length * 2
     mgr2 = new WorkQueueMgr()
     mgr2.once 'error', (err) ->

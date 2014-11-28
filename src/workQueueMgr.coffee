@@ -42,15 +42,13 @@ class WorkQueueMgr extends events.EventEmitter
     @initEmitters_()
     return this
 
-  attach: (@client) ->
-    @channel.attach @client
+  attach: (@clients...) ->
+    @channel.attach @clients...
     @initEmitters_()
 
   initEmitters_: ->
     @channel.on 'timeout', (keys, cancel) =>
       @emit 'timeout', keys, cancel
-    @channel.on 'ready', =>
-      @emit 'ready'
     @channel.on 'error', (err) =>
       @emit 'error', err
     @channel.on 'end', =>
@@ -106,6 +104,10 @@ class WorkQueueMgr extends events.EventEmitter
   clear: (keysToClear..., onClear) ->
     @channel.clear keysToClear..., onClear
     return this
+
+  clearAll: (onClear) ->
+    (args = Object.keys(@queues)).push onClear
+    @channel.clear.apply @channel, args
 
   destroyQueue_: (queueName) ->
     @ensureValidQueueName_ queueName

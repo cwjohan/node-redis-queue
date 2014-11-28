@@ -20,7 +20,7 @@ Use this app in conjunction with worker03.js. See the worker03 source code
 for more details.
 */
 
-var WorkQueueMgr, clear, clearWorkQueues, createWorkQueues, expectedItemsQ1, expectedItemsQ2, initEventHandlers, itemCntQ1, itemCntQ2, mgr, queue1, queue1Name, queue2, queue2Name, sendData, sendStop, shutDown, stop, timesToRepeat;
+var WorkQueueMgr, clear, createWorkQueues, expectedItemsQ1, expectedItemsQ2, initEventHandlers, itemCntQ1, itemCntQ2, mgr, queue1, queue1Name, queue2, queue2Name, sendData, sendStop, shutDown, stop, timesToRepeat;
 
 queue1 = null;
 
@@ -58,7 +58,8 @@ mgr.connect(function() {
     sendStop();
     return shutDown();
   } else if (clear) {
-    return clearWorkQueues(function() {
+    return mgr.clearAll(function() {
+      console.log('Cleared "' + queue1.queueName + '" and "' + queue2.queueName + '"');
       return shutDown();
     });
   } else {
@@ -81,23 +82,6 @@ initEventHandlers = function() {
 createWorkQueues = function() {
   queue1 = mgr.createQueue(queue1Name);
   queue2 = mgr.createQueue(queue2Name);
-};
-
-clearWorkQueues = function(done) {
-  var queuesToClear;
-  queuesToClear = 2;
-  queue1.clear(function() {
-    console.log('Cleared "' + queue1.queueName + '"');
-    if (!--queuesToClear) {
-      return done();
-    }
-  });
-  return queue2.clear(function() {
-    console.log('Cleared "' + queue2.queueName + '"');
-    if (!--queuesToClear) {
-      return done();
-    }
-  });
 };
 
 sendData = function() {

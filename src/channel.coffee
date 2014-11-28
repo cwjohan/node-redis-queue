@@ -13,33 +13,37 @@ class Channel extends events.EventEmitter
     @outstanding = 0
 
   connect: (onReady) ->
-    @client2 = @client = @configurator_.getClient(@config_)
-    @attach @client, onReady
+    @readyCntDn_ = 1
+    @client = @configurator_.getClient @config_
+    @client.once 'ready', @onReady_.bind this,onReady
+    @attach @client
       
   connect2: (onReady) ->
-    @client = @configurator_.getClient(@config_)
-    @client2 = @configurator_.getClient(@config_)
-    @readyCnt_ = 0
-    @attach @client, @onReady2_.bind(this, onReady)
-    @attach @client, @onReady2_.bind(this, onReady)
+    @readyCntDn_ = 2
+    @client = @configurator_.getClient @config_
+    @client.once 'ready', @onReady_.bind this, onReady
+    @client2 = @configurator_.getClient @config_
+    @client2.once 'ready', @onReady_.bind this, onReady
+    @attach @client, @client2
 
-  onReady2_: (onReady) ->
-    onReady() if ++@readyCnt_ is 2 and onReady and typeof onReady is 'function'
+  onReady_: (onReady) ->
+    onReady() if --@readyCntDn_ is 0 and onReady and typeof onReady is 'function'
       
-  attach: (@client, onReady) ->
-    unless @client instanceof Object
-      throw new ChannelError 'No client supplied'
-    @client.on 'ready', =>
-      @ready = true
-      onReady() if onReady and typeof onReady is 'function'
-      @emit 'ready'
+  attach: (@client, @client2) ->
+    @client2 = @client unless @client2
     @client.on 'error', (err) =>
       @emit 'error', err
     @client.on 'end', =>
-      @ready = false
       @emit 'end'
     @client.on 'drain', =>
       @emit 'drain'
+    if @client2
+      @client2.on 'error', (err) =>
+        @emit 'error', err
+      @client2.on 'end', =>
+        @emit 'end'
+      @client2.on 'drain', =>
+        @emit 'drain'
     return this
 
   push: (queueName, data) ->
@@ -100,16 +104,18 @@ class Channel extends events.EventEmitter
 
   disconnect: ->
     @client.quit()
+    @client2.quit() unless @client is @client2
     return this
 
   end: ->
     @client.end()
+    @client2.end() unless @client is @client2
     return this
 
   shutdownSoon: (delay) ->
     process.nextTick =>
-      if @client.offline_queue.length is 0
-        @client.end()
+      if @client2.offline_queue.length is 0
+        @end()
       else
         setTimeout =>
           @shutdownSoon delay

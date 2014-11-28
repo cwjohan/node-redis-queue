@@ -76,3 +76,6 @@ send operations now emit an 'error' event if there are multiple outstanding pop 
 outstanding. This signals when a hang likely would happen. If you get one of these errors, then use
 `connect2` rather than `connect`.
 
+**v0.2.4**: Cleaned up some sloppiness around attaching to and closing of multiple connections.
+Added `clearAll` function to WorkQueueMgr. Modified provider03 demo program to use clearAll.
+
