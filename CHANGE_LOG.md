@@ -79,3 +79,10 @@ outstanding. This signals when a hang likely would happen. If you get one of the
 **v0.2.4**: Cleaned up some sloppiness around attaching to and closing of multiple connections.
 Added `clearAll` function to WorkQueueMgr. Modified provider03 demo program to use clearAll.
 
+**v0.2.5**: Made getClient function in redisQueueConfig module handle all the details necessary
+to create a node-redis client, including checking for the QUEUE_CONFIG_FILE env variable.
+This function is now exported and may be accessed as a standalone utility function using
+`require('node-redis-queue').getClient`. That is, it can be used without creating either a
+Channel instance or a WorkQueueMgr instance. Also, added "keywords", "engines", and "os" to
+package.json.
+

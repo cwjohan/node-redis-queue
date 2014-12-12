@@ -1,7 +1,7 @@
 'use strict'
 redis = require 'redis'
 
-class ConnStrategyCustom
+class ConnStrategyBlueMixRedisCloud
   getClient: (@config) ->
     if process.env.VCAP_SERVICES
       env = JSON.parse process.env.VCAP_SERVICES
@@ -19,4 +19,4 @@ class ConnStrategyCustom
       @client = redis.createClient redisPort, redisHost, redisOptions
       return @client
 
-module.exports = new ConnStrategyCustom
+module.exports = new ConnStrategyBlueMixRedisCloud

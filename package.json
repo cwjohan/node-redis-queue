@@ -1,7 +1,9 @@
 {
     "name": "node-redis-queue",
-    "version": "0.2.4",
+    "version": "0.2.5",
     "description": "A simple, lightweight queue using Redis lpush and brpop",
+    "keywords": ["queueing", "queue", "scalable", "redis", "job", "job-queue", "work", "work-queue",
+                 "message", "message-queue", "send", "consume"],
     "main": "lib/index.js",
     "repository": {
         "type": "git",
@@ -37,5 +39,8 @@
         "test": "node_modules/.bin/mocha -R spec --compilers coffee:coffee-script/register test",
         "clean": "bash script/clean",
         "compile-test": "node_modules/.bin/coffee -c -o test test"
-    }
+    },
+    "engines": { "node": ">=0.10.29" },
+    "os": ["win32", "win64", "linux"]
 }
+

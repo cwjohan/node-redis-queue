@@ -1,28 +1,24 @@
 'use strict'
 events = require 'events'
+configurator = require './redisQueueConfig'
 
 class ChannelError extends Error
 
 class Channel extends events.EventEmitter
-  constructor: (configFilePath) ->
-    configFilePath = process.env.QUEUE_CONFIG_FILE or
-                     configFilePath or
-                     '../redis-queue-config.json'
-    @configurator_ = require './redisQueueConfig'
-    @config_ = @configurator_.getConfig(configFilePath)
+  constructor: (@configFilePath) ->
     @outstanding = 0
 
   connect: (onReady) ->
     @readyCntDn_ = 1
-    @client = @configurator_.getClient @config_
+    @client = configurator.getClient @configFilePath
     @client.once 'ready', @onReady_.bind this,onReady
     @attach @client
       
   connect2: (onReady) ->
     @readyCntDn_ = 2
-    @client = @configurator_.getClient @config_
+    @client = configurator.getClient @configFilePath
     @client.once 'ready', @onReady_.bind this, onReady
-    @client2 = @configurator_.getClient @config_
+    @client2 = configurator.getClient @configFilePath
     @client2.once 'ready', @onReady_.bind this, onReady
     @attach @client, @client2
 
